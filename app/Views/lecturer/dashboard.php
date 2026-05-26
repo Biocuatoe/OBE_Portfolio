@@ -1,0 +1,157 @@
+<?php /* app/Views/lecturer/dashboard.php */ ?>
+<?php $pageTitle = 'Tổng quan giảng dạy'; ?>
+
+<?php if (!empty($pending_grading)): ?>
+<div class="alert-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    Có <strong><?= count($pending_grading) ?></strong> bài kiểm tra chưa chấm đủ cho tất cả sinh viên
+</div>
+<?php else: ?>
+<div class="alert-banner alert-banner--success">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <polyline points="20 6 9 17 4 12"/>
+    </svg>
+    Tất cả bài kiểm tra đã được chấm điểm đầy đủ! 🎉
+</div>
+<?php endif; ?>
+
+<!-- Môn học phụ trách -->
+<div class="section-card">
+    <div class="section-header">
+        <h3 class="section-title">Môn học phụ trách</h3>
+        <span class="section-badge"><?= count($assignments) ?> môn</span>
+    </div>
+    <div class="assignment-grid">
+        <?php foreach ($assignments as $a): ?>
+        <div class="assignment-card">
+            <div class="assignment-card-header">
+                <span class="course-badge"><?= htmlspecialchars($a['course_code']) ?></span>
+                <span class="semester-tag"><?= htmlspecialchars($a['semester']) ?></span>
+            </div>
+            <h4 class="assignment-title"><?= htmlspecialchars($a['course_name']) ?></h4>
+            <div class="assignment-stats">
+                <div class="astat">
+                    <div class="astat-val"><?= $a['student_count'] ?></div>
+                    <div class="astat-lbl">Sinh viên</div>
+                </div>
+                <div class="astat">
+                    <div class="astat-val"><?= $a['assessment_count'] ?></div>
+                    <div class="astat-lbl">Bài kiểm tra</div>
+                </div>
+            </div>
+            <div class="assignment-actions">
+                <a href="/lecturer/assignment/<?= $a['id'] ?>/clos" class="action-btn">CLO</a>
+                <a href="/lecturer/assignment/<?= $a['id'] ?>/assessments" class="action-btn">Bài KT</a>
+                <a href="/admin/course/<?= $a['course_id'] ?? 0 ?>/mapping" class="action-btn action-btn--primary">Ma trận</a>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+
+<!-- Danh sách bài kiểm tra cần chấm -->
+<?php if (!empty($pending_grading)): ?>
+<div class="section-card">
+    <div class="section-header">
+        <h3 class="section-title">Cần hoàn thành chấm điểm</h3>
+        <span class="section-badge urgent"><?= count($pending_grading) ?></span>
+    </div>
+    <div class="pending-list">
+        <?php foreach ($pending_grading as $p): ?>
+        <?php
+            $total    = (int)$p['total_students'];
+            $graded   = (int)$p['fully_graded_students'];
+            $pct      = $total > 0 ? round($graded / $total * 100) : 0;
+            $remaining = $total - $graded;
+        ?>
+        <div class="pending-item">
+            <div class="pending-info">
+                <span class="assessment-type-badge type-<?= $p['type'] ?>"><?= strtoupper($p['type']) ?></span>
+                <div class="pending-title-group">
+                    <span class="pending-title"><?= htmlspecialchars($p['title']) ?></span>
+                    <span class="pending-remaining">Còn <strong><?= $remaining ?></strong> SV chưa có đủ điểm</span>
+                </div>
+            </div>
+            <div class="pending-progress-group">
+                <span class="pending-count"><?= $graded ?>/<?= $total ?> SV hoàn thành</span>
+                <div class="progress-track" style="width:140px">
+                    <div class="progress-fill <?= $pct >= 70 ? 'fill--good' : ($pct >= 30 ? 'fill--mid' : 'fill--low') ?>"
+                         style="width:<?= $pct ?>%"></div>
+                </div>
+                <span class="pending-pct"><?= $pct ?>%</span>
+            </div>
+            <a href="/lecturer/assessment/<?= $p['assessment_id'] ?>/grade"
+               class="btn btn-primary" style="padding:7px 18px;font-size:13px;white-space:nowrap">
+                Chấm điểm →
+            </a>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<style>
+.alert-banner {
+    display:flex; align-items:center; gap:10px;
+    padding:12px 16px;
+    background:rgba(245,158,11,.1);
+    border:1px solid rgba(245,158,11,.3);
+    border-radius:var(--radius-md);
+    color:#fcd34d; font-size:13px; font-weight:500;
+}
+.alert-banner--success {
+    background:rgba(16,185,129,.08);
+    border-color:rgba(16,185,129,.3);
+    color:var(--emerald);
+}
+
+.assignment-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+.assignment-card {
+    background:var(--surface-0); border:1px solid var(--surface-2);
+    border-radius:var(--radius-lg); padding:18px;
+    display:flex; flex-direction:column; gap:12px;
+    transition:border-color var(--transition);
+}
+.assignment-card:hover { border-color:var(--surface-3); }
+.assignment-card-header { display:flex; justify-content:space-between; align-items:center; }
+.semester-tag { font-size:11px; color:var(--text-muted); }
+.assignment-title { font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:14px; color:var(--text-primary); line-height:1.4; }
+
+.assignment-stats { display:flex; gap:24px; }
+.astat { text-align:center; }
+.astat-val { font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:24px; color:var(--text-primary); }
+.astat-lbl { font-size:11px; color:var(--text-muted); }
+
+.assignment-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.action-btn {
+    padding:6px 14px; border-radius:var(--radius-sm);
+    font-size:12px; font-weight:600;
+    background:var(--surface-1); border:1px solid var(--surface-2);
+    color:var(--text-secondary); text-decoration:none;
+    transition:all var(--transition);
+}
+.action-btn:hover { border-color:var(--accent); color:var(--text-primary); }
+.action-btn--primary { background:var(--accent-soft); border-color:rgba(99,102,241,.4); color:#a5b4fc; }
+
+.pending-list { display:flex; flex-direction:column; gap:12px; }
+.pending-item {
+    display:flex; align-items:center; gap:16px;
+    padding:14px 16px;
+    background:var(--surface-0); border:1px solid var(--surface-2);
+    border-radius:var(--radius-md);
+    transition:border-color var(--transition);
+}
+.pending-item:hover { border-color:var(--surface-3); }
+.pending-info { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+.pending-title-group { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.pending-title { font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pending-remaining { font-size:11px; color:var(--rose); }
+
+.pending-progress-group { display:flex; align-items:center; gap:10px; }
+.pending-count { font-size:12px; color:var(--text-secondary); white-space:nowrap; }
+.pending-pct { font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:13px; color:var(--text-secondary); min-width:35px; }
+
+.section-badge.urgent { background:rgba(244,63,94,.15); color:var(--rose); }
+</style>

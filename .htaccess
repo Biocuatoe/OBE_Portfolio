@@ -1,0 +1,10 @@
+# Chặn tất cả truy cập trực tiếp từ web vào thư mục gốc
+# Chỉ public/ được phép truy cập
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^ /public/index.php [L]
+</IfModule>
