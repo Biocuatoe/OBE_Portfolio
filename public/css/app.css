@@ -1116,3 +1116,94 @@ kbd {
     .stats-grid { grid-template-columns: 1fr; }
     .page-content { padding: 16px; }
 }
+
+/* ── Print Styles ────────────────────────────────────────────────── */
+@media print {
+    .sidebar,
+    .top-bar,
+    .nav-actions,
+    .filter-bar,
+    .btn,
+    #printBtn {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: #000 !important;
+        font-size: 11pt;
+    }
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
+
+    .page-content {
+        max-width: none !important;
+        padding: 0 !important;
+    }
+
+    .section-card {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        background: white !important;
+        padding: 16px !important;
+    }
+
+    :root {
+        --accent: #4f46e5;
+        --text-primary: #000;
+        --text-secondary: #444;
+        --surface-0: #fff;
+        --surface-1: #fff;
+        --surface-2: #ccc;
+    }
+
+    .bar-fill {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .mini-progress-fill,
+    .student-bar-fill,
+    .top5-bar-fill {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    h2, h3 {
+        page-break-after: avoid;
+    }
+
+    table {
+        page-break-inside: avoid;
+    }
+
+    .bar-threshold {
+        background: #f59e0b !important;
+    }
+
+    .cat-badge,
+    .plo-badge,
+    .section-badge {
+        border: 1px solid currentColor;
+    }
+
+    .page-header {
+        flex-direction: row !important;
+    }
+
+    .header-actions {
+        flex-direction: row !important;
+    }
+
+    .form-select {
+        background: white !important;
+        border: 1px solid #ccc !important;
+        color: #000 !important;
+    }
+}

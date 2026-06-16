@@ -76,62 +76,6 @@ class AdminController extends BaseController
     }
 
     // ── Programs ─────────────────────────────────────────────────────
-    public function programs(array $params): void
-    {
-        $this->requireAuth('admin');
-
-        $programs = $this->db->fetchAll(
-            "SELECT p.*,
-                u.full_name AS admin_name,
-                COUNT(DISTINCT c.id)          AS course_count,
-                COUNT(DISTINCT pl.id)         AS plo_count,
-                COUNT(DISTINCT ca.id)         AS assignment_count,
-                COUNT(DISTINCT e.student_id)  AS student_count
-             FROM programs p
-             JOIN users u ON u.id = p.admin_id
-             LEFT JOIN courses c ON c.program_id = p.id
-             LEFT JOIN plos pl ON pl.program_id = p.id
-             LEFT JOIN course_assignments ca ON ca.course_id = c.id
-             LEFT JOIN enrollments e ON e.assignment_id = ca.id
-             GROUP BY p.id
-             ORDER BY p.created_at DESC"
-        );
-
-        $this->view('admin/programs', [
-            'pageTitle' => 'Chương trình đào tạo',
-            'programs'  => $programs,
-            'csrf_token' => $this->csrfToken(),
-        ]);
-    }
-
-    public function programs(array $params): void
-    {
-        $this->requireAuth('admin');
-
-        $programs = $this->db->fetchAll(
-            "SELECT p.*,
-                u.full_name AS admin_name,
-                COUNT(DISTINCT c.id)   AS course_count,
-                COUNT(DISTINCT pl.id)  AS plo_count,
-                COUNT(DISTINCT ca.id)  AS lecturer_count,
-                COUNT(DISTINCT e.student_id) AS student_count
-             FROM programs p
-             JOIN users u ON u.id = p.admin_id
-             LEFT JOIN courses c ON c.program_id = p.id
-             LEFT JOIN plos pl ON pl.program_id = p.id
-             LEFT JOIN course_assignments ca ON ca.course_id = c.id
-             LEFT JOIN enrollments e ON e.assignment_id = ca.id
-             GROUP BY p.id
-             ORDER BY p.created_at DESC"
-        );
-
-        $this->view('admin/programs', [
-            'pageTitle'   => 'Chương trình đào tạo',
-            'programs'    => $programs,
-            'csrf_token' => $this->csrfToken(),
-        ]);
-    }
-
     public function storeProgram(array $params): void
     {
         $this->requireAuth('admin');
@@ -963,48 +907,132 @@ class AdminController extends BaseController
     // ── Report: Program Attainment Overview ──────────────────────────
     public function reportAttainment(array $params): void
     {
-        $this->requireAuth('admin');
+        $this->requireAuth('admin', 'lecturer');
 
-        $programId = (int)($params['program_id'] ?? 1);
+        $programId = (int)($_GET['program_id'] ?? ($params['program_id'] ?? 0));
 
-        // Tổng quan attainment theo từng PLO
-        $ploReport = $this->db->fetchAll(
-            "SELECT
-                p.code, p.description, p.category,
-                COUNT(DISTINCT pa.student_id)          AS measured_students,
-                ROUND(AVG(pa.achieved_percentage), 1)  AS avg_pct,
-                SUM(pa.achieved_percentage >= 70)       AS passed_count,
-                COUNT(pa.student_id)                    AS total_count
+        // Fetch all programs
+        $programs = $this->db->fetchAll(
+            "SELECT id, code, name FROM programs ORDER BY name"
+        );
+
+        // Default to first program if none selected
+        if ($programId === 0 && !empty($programs)) {
+            $programId = (int)$programs[0]['id'];
+        }
+
+        if ($programId === 0) {
+            $this->view('admin/report_attainment', [
+                'pageTitle'           => 'Báo cáo đạt chuẩn PLO',
+                'programs'            => $programs,
+                'selected_program_id' => 0,
+                'plo_report'          => [],
+                'top_students'        => [],
+                'csrf_token'          => $this->csrfToken(),
+            ]);
+            return;
+        }
+
+        // Fetch PLOs with attainment metrics
+        $plos = $this->db->fetchAll(
+            "SELECT p.id, p.code, p.description, p.category
              FROM plos p
-             LEFT JOIN plo_attainments pa ON pa.plo_id = p.id
              WHERE p.program_id = ?
-             GROUP BY p.id
              ORDER BY p.code",
             [$programId]
         );
 
-        // Top sinh viên
+        $ploReport = [];
+        foreach ($plos as $plo) {
+            // Measured students: distinct students with CLO attainment linked to this PLO
+            $measured = $this->db->fetchOne(
+                "SELECT COUNT(DISTINCT ca.student_id) AS c
+                 FROM clo_attainment ca
+                 JOIN clos c ON c.id = ca.clo_id
+                 JOIN clo_plos cp ON cp.clo_id = c.id
+                 WHERE cp.plo_id = ?",
+                [$plo['id']]
+            );
+            $measuredStudents = (int)($measured['c'] ?? 0);
+
+            // Average attainment from clo_attainment
+            $avgRow = $this->db->fetchOne(
+                "SELECT ROUND(AVG(ca.attainment_pct), 1) AS avg_pct
+                 FROM clo_attainment ca
+                 JOIN clos c ON c.id = ca.clo_id
+                 JOIN clo_plos cp ON cp.clo_id = c.id
+                 WHERE cp.plo_id = ?",
+                [$plo['id']]
+            );
+            $avgAttainment = (float)($avgRow['avg_pct'] ?? 0);
+
+            // Students passed (attainment_pct >= 70)
+            $passedRow = $this->db->fetchOne(
+                "SELECT COUNT(DISTINCT ca.student_id) AS c
+                 FROM clo_attainment ca
+                 JOIN clos c ON c.id = ca.clo_id
+                 JOIN clo_plos cp ON cp.clo_id = c.id
+                 WHERE cp.plo_id = ? AND ca.attainment_pct >= 70",
+                [$plo['id']]
+            );
+            $studentsPassed = (int)($passedRow['c'] ?? 0);
+
+            // Pass rate
+            $passRate = $measuredStudents > 0
+                ? round($studentsPassed / $measuredStudents * 100, 1)
+                : 0;
+
+            // CLO codes mapped to this PLO
+            $clos = $this->db->fetchAll(
+                "SELECT c.code
+                 FROM clos c
+                 JOIN clo_plos cp ON cp.clo_id = c.id
+                 WHERE cp.plo_id = ?
+                 ORDER BY c.code",
+                [$plo['id']]
+            );
+            $cloCodes = implode(', ', array_column($clos, 'code'));
+
+            $ploReport[] = [
+                'id'                => $plo['id'],
+                'code'              => $plo['code'],
+                'description'       => $plo['description'],
+                'category'          => $plo['category'],
+                'measured_students' => $measuredStudents,
+                'avg_attainment'    => $avgAttainment,
+                'students_passed'   => $studentsPassed,
+                'pass_rate'         => $passRate,
+                'clo_codes'         => $cloCodes,
+            ];
+        }
+
+        // Top 10 students by overall PLO attainment
         $topStudents = $this->db->fetchAll(
-            "SELECT u.full_name, u.username,
-                ROUND(AVG(pa.achieved_percentage), 1) AS overall_pct
-             FROM plo_attainments pa
-             JOIN users u ON u.id = pa.student_id
-             JOIN plos p ON p.id = pa.plo_id
-             WHERE p.program_id = ?
-             GROUP BY pa.student_id
+            "SELECT u.id, u.full_name, u.username,
+                ROUND(AVG(ca.attainment_pct), 1) AS overall_pct,
+                COUNT(DISTINCT cp.plo_id) AS plos_measured
+             FROM users u
+             JOIN enrollments e ON e.student_id = u.id
+             JOIN assignments a ON a.id = e.assignment_id
+             JOIN courses c ON c.id = a.course_id
+             JOIN clo_attainment ca ON ca.student_id = u.id
+             JOIN clos cl ON cl.id = ca.clo_id
+             JOIN clo_plos cp ON cp.clo_id = cl.id
+             JOIN plos pl ON pl.id = cp.plo_id AND pl.program_id = ?
+             WHERE c.program_id = ?
+             GROUP BY u.id
              ORDER BY overall_pct DESC
              LIMIT 10",
-            [$programId]
+            [$programId, $programId]
         );
 
-        $programs = $this->db->fetchAll("SELECT * FROM programs ORDER BY code");
-
         $this->view('admin/report_attainment', [
-            'pageTitle'    => 'Báo cáo đạt chuẩn PLO',
-            'plo_report'   => $ploReport,
-            'top_students' => $topStudents,
-            'programs'     => $programs,
-            'program_id'   => $programId,
+            'pageTitle'           => 'Báo cáo đạt chuẩn PLO',
+            'programs'            => $programs,
+            'selected_program_id' => $programId,
+            'plo_report'          => $ploReport,
+            'top_students'        => $topStudents,
+            'csrf_token'          => $this->csrfToken(),
         ]);
     }
 }
