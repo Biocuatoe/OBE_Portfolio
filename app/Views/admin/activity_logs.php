@@ -1,103 +1,72 @@
 <?php /* app/Views/admin/activity_logs.php */ ?>
 <meta name="csrf-token" content="<?= htmlspecialchars($csrf_token) ?>">
 
-<?php
-$roleLabels = [
-    'admin'    => ['label' => 'Admin', 'color' => 'var(--rose)'],
-    'lecturer' => ['label' => 'GV', 'color' => 'var(--sky)'],
-    'student'  => ['label' => 'SV', 'color' => 'var(--emerald)'],
-];
-
-function getActionBadgeClass(string $action): string {
-    $action = strtolower($action);
-    if (strpos($action, 'login') !== false) return 'badge--sky';
-    if (strpos($action, 'logout') !== false) return 'badge--gray';
-    if (strpos($action, 'create') !== false || strpos($action, 'add') !== false || strpos($action, 'insert') !== false || strpos($action, 'enroll') !== false) return 'badge--emerald';
-    if (strpos($action, 'update') !== false || strpos($action, 'edit') !== false || strpos($action, 'save') !== false || strpos($action, 'grade') !== false) return 'badge--sky';
-    if (strpos($action, 'delete') !== false || strpos($action, 'remove') !== false) return 'badge--rose';
-    if (strpos($action, 'activate') !== false) return 'badge--emerald';
-    if (strpos($action, 'deactivate') !== false) return 'badge--amber';
-    return 'badge--gray';
-}
-
-function buildQueryParams(array $overrides = []): string {
-    $params = [];
-    $params['page'] = $overrides['page'] ?? ($_GET['page'] ?? '1');
-    if (!empty($_GET['role'])) $params['role'] = $_GET['role'];
-    if (!empty($_GET['action'])) $params['action'] = $_GET['action'];
-    if (!empty($_GET['from'])) $params['from'] = $_GET['from'];
-    if (!empty($_GET['to'])) $params['to'] = $_GET['to'];
-    if (!empty($overrides['role'])) {
-        if ($overrides['role'] === '') unset($params['role']);
-        else $params['role'] = $overrides['role'];
-    }
-    if (isset($overrides['action']) && $overrides['action'] === '') unset($params['action']);
-    if (isset($overrides['from'])) $params['from'] = $overrides['from'];
-    if (isset($overrides['to'])) $params['to'] = $overrides['to'];
-    return '?' . http_build_query($params);
-}
-?>
-
 <!-- Page Header -->
 <div class="page-header">
     <div>
         <h2 class="page-heading">Nhật ký hoạt động</h2>
-        <p class="page-sub">Lịch sử thao tác trên hệ thống</p>
+        <p class="page-sub">Audit trail — theo dõi mọi thay đổi trong hệ thống</p>
     </div>
 </div>
 
-<!-- Stats Bar -->
-<div class="stats-bar">
-    <div class="stat-item">
-        <span class="stat-value"><?= number_format($stats_total) ?></span>
-        <span class="stat-label">Tổng bản ghi</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat-item">
-        <span class="stat-value stat-value--accent"><?= number_format($stats_today) ?></span>
-        <span class="stat-label">Hôm nay</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat-item">
-        <span class="stat-value stat-value--accent"><?= number_format($stats_7days) ?></span>
-        <span class="stat-label">7 ngày qua</span>
-    </div>
+<!-- Filter Bar -->
+<div class="filter-card">
+    <form method="GET" action="/admin/activity-logs" class="filter-form" id="filterForm">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label" for="filter-user">Người dùng</label>
+                <select name="user_id" id="filter-user" class="filter-select">
+                    <option value="">— Tất cả người dùng —</option>
+                    <?php foreach ($users_list as $u): ?>
+                        <option value="<?= $u['id'] ?>" <?= $filter_user_id == $u['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($u['full_name']) ?> (<?= $u['role'] ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label" for="filter-action">Hành động</label>
+                <select name="action" id="filter-action" class="filter-select">
+                    <option value="">— Tất cả hành động —</option>
+                    <?php foreach ($distinct_actions as $act): ?>
+                        <option value="<?= htmlspecialchars($act) ?>" <?= $filter_action === $act ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($act) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label" for="filter-date-from">Từ ngày</label>
+                <input type="date" name="date_from" id="filter-date-from" class="filter-input" value="<?= htmlspecialchars($filter_date_from) ?>">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label" for="filter-date-to">Đến ngày</label>
+                <input type="date" name="date_to" id="filter-date-to" class="filter-input" value="<?= htmlspecialchars($filter_date_to) ?>">
+            </div>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                Lọc
+            </button>
+            <a href="/admin/activity-logs" class="btn btn-ghost btn-sm">Xoá lọc</a>
+        </div>
+    </form>
 </div>
 
 <!-- Logs Table Card -->
 <div class="section-card">
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <div class="filter-tabs">
-            <a href="/admin/activity-logs<?= buildQueryParams(['role' => '']) ?>" class="filter-tab <?= !$filter_role ? 'active' : '' ?>">Tất cả</a>
-            <a href="/admin/activity-logs<?= buildQueryParams(['role' => 'admin']) ?>" class="filter-tab <?= $filter_role === 'admin' ? 'active' : '' ?>">Admin</a>
-            <a href="/admin/activity-logs<?= buildQueryParams(['role' => 'lecturer']) ?>" class="filter-tab <?= $filter_role === 'lecturer' ? 'active' : '' ?>">Giảng viên</a>
-            <a href="/admin/activity-logs<?= buildQueryParams(['role' => 'student']) ?>" class="filter-tab <?= $filter_role === 'student' ? 'active' : '' ?>">Sinh viên</a>
-        </div>
-
-        <form class="filter-form" method="GET" action="/admin/activity-logs">
-            <?php if ($filter_role): ?>
-                <input type="hidden" name="role" value="<?= htmlspecialchars($filter_role) ?>">
-            <?php endif; ?>
-
-            <select name="action" class="filter-select" onchange="this.form.submit()">
-                <option value="">— Tất cả thao tác —</option>
-                <?php foreach ($action_types as $at): ?>
-                    <option value="<?= htmlspecialchars($at['action']) ?>" <?= $filter_action === $at['action'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($at['action']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-
-            <div class="date-range">
-                <input type="date" name="from" class="filter-date" value="<?= htmlspecialchars($filter_from) ?>" title="Từ ngày">
-                <span class="date-sep">—</span>
-                <input type="date" name="to" class="filter-date" value="<?= htmlspecialchars($filter_to) ?>" title="Đến ngày">
-            </div>
-
-            <button type="submit" class="btn btn-ghost btn-sm">Áp dụng</button>
-            <a href="/admin/activity-logs" class="btn btn-ghost btn-sm">Reset</a>
-        </form>
+    <div class="table-info-bar">
+        <?php
+        $from = (($current_page - 1) * 30) + 1;
+        $to   = min($current_page * 30, count($logs) > 0 ? (($current_page - 1) * 30) + count($logs) : 0);
+        $total = $total_pages * 30;
+        ?>
+        Hiển thị <?= $from ?>-<?= $to ?> trên <?= $total ?> kết quả
     </div>
 
     <div class="table-wrapper">
@@ -106,7 +75,6 @@ function buildQueryParams(array $overrides = []): string {
                 <tr>
                     <th>Thời gian</th>
                     <th>Người dùng</th>
-                    <th>Vai trò</th>
                     <th>Hành động</th>
                     <th>Đối tượng</th>
                     <th>IP</th>
@@ -115,45 +83,87 @@ function buildQueryParams(array $overrides = []): string {
             <tbody>
                 <?php if (empty($logs)): ?>
                     <tr>
-                        <td colspan="6">
+                        <td colspan="5">
                             <div class="empty-state">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                                <p>Không có bản ghi nào phù hợp.</p>
+                                <p>Không có nhật ký nào phù hợp.</p>
                             </div>
                         </td>
                     </tr>
                 <?php else: ?>
+                    <?php
+                    function formatLogTime(string $createdAt): string {
+                        $dt = new DateTime($createdAt);
+                        $now = new DateTime('today');
+                        if ($dt->format('Y-m-d') === $now->format('Y-m-d')) {
+                            return 'Hôm nay ' . $dt->format('H:i');
+                        }
+                        return $dt->format('d/m/Y H:i');
+                    }
+
+                    function actionColor(string $action): string {
+                        $a = strtolower($action);
+                        if (strpos($a, 'login') !== false) return 'action--indigo';
+                        if (strpos($a, 'logout') !== false) return 'action--gray';
+                        if (preg_match('/\b(create|add|insert|enroll)\b/', $a)) return 'action--green';
+                        if (preg_match('/\b(update|edit|save|grade)\b/', $a)) return 'action--sky';
+                        if (preg_match('/\b(delete|remove)\b/', $a)) return 'action--rose';
+                        if (preg_match('/\b(activate|deactivate)\b/', $a)) return 'action--amber';
+                        return 'action--gray';
+                    }
+
+                    function roleBadgeClass(string $role): string {
+                        return match($role) {
+                            'admin'    => 'badge--indigo',
+                            'lecturer' => 'badge--sky',
+                            'student'  => 'badge--emerald',
+                            default    => 'badge--gray',
+                        };
+                    }
+
+                    function roleLabel(string $role): string {
+                        return match($role) {
+                            'admin'    => 'Admin',
+                            'lecturer' => 'Giảng viên',
+                            'student'  => 'Sinh viên',
+                            default    => ucfirst($role),
+                        };
+                    }
+                    ?>
                     <?php foreach ($logs as $log): ?>
                         <?php
-                            $roleInfo = $roleLabels[$log['user_role']] ?? ['label' => $log['user_role'], 'color' => 'var(--text-muted)'];
-                            $badgeClass = getActionBadgeClass($log['action']);
-                            $timestamp = strtotime($log['created_at']);
+                            $initial = mb_strtoupper(mb_substr($log['full_name'] ?? $log['username'], 0, 1));
+                            $colorClass = actionColor($log['action']);
                         ?>
-                        <tr>
-                            <td class="timestamp-cell">
-                                <span class="timestamp-date"><?= date('d/m/Y', $timestamp) ?></span>
-                                <span class="timestamp-time"><?= date('H:i:s', $timestamp) ?></span>
+                        <tr class="log-row">
+                            <td class="text-mono text-sm">
+                                <?= formatLogTime($log['created_at']) ?>
                             </td>
                             <td>
-                                <div class="user-info">
-                                    <span class="user-name"><?= htmlspecialchars($log['full_name']) ?></span>
-                                    <span class="user-username">@<?= htmlspecialchars($log['username']) ?></span>
+                                <div class="user-cell">
+                                    <div class="user-avatar user-avatar--<?= $log['role'] ?>"><?= $initial ?></div>
+                                    <div>
+                                        <div class="cell-primary"><?= htmlspecialchars($log['full_name']) ?></div>
+                                        <div>
+                                            <span class="role-badge <?= roleBadgeClass($log['role']) ?>"><?= roleLabel($log['role']) ?></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                             <td>
-                                <span class="role-badge" style="color: <?= $roleInfo['color'] ?>; background: <?= str_replace(')', ', .15)', $roleInfo['color']) ?>">
-                                    <?= $roleInfo['label'] ?>
-                                </span>
-                            </td>
-                            <td>
-                                <span class="action-badge <?= $badgeClass ?>">
+                                <span class="action-tag <?= $colorClass ?>">
+                                    <span class="action-dot"></span>
                                     <?= htmlspecialchars($log['action']) ?>
                                 </span>
                             </td>
-                            <td class="text-muted">
-                                <?= $log['entity'] ? htmlspecialchars($log['entity']) : '—' ?>
+                            <td>
+                                <span class="cell-sub">
+                                    <?= $log['entity'] ? htmlspecialchars($log['entity']) : '—' ?>
+                                </span>
                             </td>
-                            <td class="ip-cell"><?= htmlspecialchars($log['ip_address'] ?? '—') ?></td>
+                            <td>
+                                <span class="text-mono text-sm text-muted"><?= htmlspecialchars($log['ip_address'] ?? '—') ?></span>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -161,43 +171,64 @@ function buildQueryParams(array $overrides = []): string {
         </table>
     </div>
 
-    <?php if (!empty($logs)): ?>
-        <!-- Pagination -->
-        <div class="pagination-bar">
-            <div class="pagination-info">
-                Trang <?= $pagination['page'] ?> / <?= $pagination['pages'] ?>
-                (<?= number_format($pagination['total']) ?> bản ghi)
-            </div>
-            <div class="pagination-controls">
-                <?php if ($pagination['has_prev']): ?>
-                    <a href="/admin/activity-logs<?= buildQueryParams(['page' => $pagination['page'] - 1]) ?>" class="btn btn-ghost btn-sm">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
-                        Trước
-                    </a>
-                <?php else: ?>
-                    <button class="btn btn-ghost btn-sm" disabled>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
-                        Trước
-                    </button>
-                <?php endif; ?>
+    <!-- Pagination -->
+    <?php if ($total_pages > 1): ?>
+        <div class="pagination">
+            <?php
+            $baseUrl = '/admin/activity-logs?page=';
+            $qsParts = [];
+            if ($filter_user_id)   $qsParts[] = 'user_id=' . urlencode($filter_user_id);
+            if ($filter_action)    $qsParts[] = 'action=' . urlencode($filter_action);
+            if ($filter_date_from) $qsParts[] = 'date_from=' . urlencode($filter_date_from);
+            if ($filter_date_to)   $qsParts[] = 'date_to=' . urlencode($filter_date_to);
+            $qs = $qsParts ? '&' . implode('&', $qsParts) : '';
+            ?>
+            <?php if ($current_page > 1): ?>
+                <a href="<?= $baseUrl . ($current_page - 1) . $qs ?>" class="page-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+                </a>
+            <?php else: ?>
+                <span class="page-btn page-btn--disabled">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+                </span>
+            <?php endif; ?>
 
-                <?php if ($pagination['has_next']): ?>
-                    <a href="/admin/activity-logs<?= buildQueryParams(['page' => $pagination['page'] + 1]) ?>" class="btn btn-ghost btn-sm">
-                        Sau
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                    </a>
+            <?php
+            $start = max(1, $current_page - 2);
+            $end   = min($total_pages, $current_page + 2);
+            if ($start > 1): ?>
+                <a href="<?= $baseUrl . 1 . $qs ?>" class="page-num">1</a>
+                <?php if ($start > 2): ?><span class="page-ellipsis">…</span><?php endif; ?>
+            <?php endif; ?>
+
+            <?php for ($i = $start; $i <= $end; $i++): ?>
+                <?php if ($i === $current_page): ?>
+                    <span class="page-num page-num--active"><?= $i ?></span>
                 <?php else: ?>
-                    <button class="btn btn-ghost btn-sm" disabled>
-                        Sau
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                    </button>
+                    <a href="<?= $baseUrl . $i . $qs ?>" class="page-num"><?= $i ?></a>
                 <?php endif; ?>
-            </div>
+            <?php endfor; ?>
+
+            <?php if ($end < $total_pages): ?>
+                <?php if ($end < $total_pages - 1): ?><span class="page-ellipsis">…</span><?php endif; ?>
+                <a href="<?= $baseUrl . $total_pages . $qs ?>" class="page-num"><?= $total_pages ?></a>
+            <?php endif; ?>
+
+            <?php if ($current_page < $total_pages): ?>
+                <a href="<?= $baseUrl . ($current_page + 1) . $qs ?>" class="page-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
+            <?php else: ?>
+                <span class="page-btn page-btn--disabled">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+                </span>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 </div>
 
 <style>
+/* ── Page Header ──────────────────────────────────────────────────── */
 .page-header {
     display: flex;
     align-items: flex-start;
@@ -214,109 +245,47 @@ function buildQueryParams(array $overrides = []): string {
 }
 .page-sub { font-size: 13px; color: var(--text-muted); }
 
-/* Stats Bar */
-.stats-bar {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 16px 20px;
+/* ── Filter Card ─────────────────────────────────────────────────── */
+.filter-card {
     background: var(--surface-1);
     border: 1px solid var(--surface-2);
     border-radius: var(--radius-md);
-    margin-bottom: 20px;
-}
-.stat-item { text-align: center; }
-.stat-value {
-    display: block;
-    font-family: 'Lexend Deca', sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-.stat-value--accent { color: var(--accent); }
-.stat-label {
-    display: block;
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-}
-.stat-divider {
-    width: 1px;
-    height: 40px;
-    background: var(--surface-2);
-}
-
-/* Filter Bar */
-.filter-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    padding: 16px;
     margin-bottom: 16px;
-    flex-wrap: wrap;
 }
-.filter-tabs {
-    display: flex;
-    gap: 4px;
-    background: var(--surface-0);
-    border: 1px solid var(--surface-2);
-    border-radius: 8px;
-    padding: 3px;
+.filter-form {}
+.filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 160px 160px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
-.filter-tab {
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: all var(--transition);
-    white-space: nowrap;
-}
-.filter-tab:hover { color: var(--text-primary); }
-.filter-tab.active { background: var(--accent); color: white; }
-
-.filter-form {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-.filter-select {
+.filter-actions { display: flex; gap: 8px; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
+.filter-select, .filter-input {
     background: var(--surface-0);
     border: 1px solid var(--surface-2);
     border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-family: 'Lexend Deca', sans-serif;
+    font-size: 13px;
     color: var(--text-primary);
-    padding: 8px 12px;
-    font-size: 12px;
-    outline: none;
-    cursor: pointer;
     transition: border-color var(--transition);
-    min-width: 160px;
 }
-.filter-select:focus { border-color: var(--accent); }
+.filter-select:focus, .filter-input:focus { outline: none; border-color: var(--accent); }
+.filter-select option { background: var(--surface-1); }
+.filter-input[type="date"] { cursor: pointer; }
 
-.date-range {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.filter-date {
-    background: var(--surface-0);
+/* ── Section Card ───────────────────────────────────────────────── */
+.section-card {
+    background: var(--surface-1);
     border: 1px solid var(--surface-2);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    padding: 8px 10px;
-    font-size: 12px;
-    outline: none;
-    transition: border-color var(--transition);
+    border-radius: var(--radius-md);
+    overflow: hidden;
 }
-.filter-date:focus { border-color: var(--accent); }
-.date-sep { color: var(--text-muted); font-size: 12px; }
 
-/* Table */
+/* ── Table ───────────────────────────────────────────────────────── */
 .table-wrapper { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
@@ -331,116 +300,163 @@ function buildQueryParams(array $overrides = []): string {
     white-space: nowrap;
 }
 .data-table td {
-    padding: 10px 14px;
-    border-bottom: 1px solid rgba(51,65,85,.3);
+    padding: 11px 14px;
+    border-bottom: 1px solid rgba(51,65,85,.4);
     vertical-align: middle;
-    font-size: 13px;
 }
 .data-table tbody tr:hover td { background: rgba(51,65,85,.2); }
 .data-table tbody tr:last-child td { border-bottom: none; }
 
-.timestamp-cell {
-    font-family: 'Lexend Deca', monospace;
+/* ── User cell ───────────────────────────────────────────────────── */
+.user-cell { display: flex; align-items: center; gap: 10px; }
+.user-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lexend Deca', sans-serif;
+    font-weight: 700;
     font-size: 12px;
-    white-space: nowrap;
+    flex-shrink: 0;
 }
-.timestamp-date { color: var(--text-primary); display: block; }
-.timestamp-time { color: var(--text-muted); font-size: 11px; display: block; }
+.user-avatar--admin    { background: var(--accent-soft); color: var(--accent); }
+.user-avatar--lecturer { background: rgba(14,165,233,.12); color: var(--sky); }
+.user-avatar--student  { background: rgba(16,185,129,.12); color: var(--emerald); }
+.user-avatar--default  { background: var(--surface-2); color: var(--text-secondary); }
 
-.user-info { display: flex; flex-direction: column; gap: 1px; }
-.user-name { font-weight: 500; color: var(--text-primary); font-size: 13px; }
-.user-username { font-size: 11px; color: var(--text-muted); }
+.cell-primary { font-weight: 500; font-size: 13px; color: var(--text-primary); }
+.cell-sub { font-size: 11px; color: var(--text-muted); }
 
+/* ── Role badges ────────────────────────────────────────────────── */
 .role-badge {
     display: inline-flex;
     align-items: center;
+    padding: 1px 8px;
+    border-radius: 20px;
     font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
-    white-space: nowrap;
-    text-transform: uppercase;
-    letter-spacing: .3px;
+    font-weight: 600;
+    font-family: 'Lexend Deca', sans-serif;
+    margin-top: 2px;
 }
+.badge--indigo  { background: var(--accent-soft); color: var(--accent); }
+.badge--sky     { background: rgba(14,165,233,.12); color: var(--sky); }
+.badge--emerald { background: rgba(16,185,129,.12); color: var(--emerald); }
+.badge--gray    { background: var(--surface-2); color: var(--text-muted); }
 
-.action-badge {
+/* ── Action tags ────────────────────────────────────────────────── */
+.action-tag {
     display: inline-flex;
     align-items: center;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 12px;
+    gap: 7px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'Lexend Deca', sans-serif;
     white-space: nowrap;
 }
-.badge--emerald { background: rgba(16,185,129,.15); color: #6ee7b7; }
-.badge--sky     { background: rgba(14,165,233,.15); color: #7dd3fc; }
-.badge--amber   { background: rgba(245,158,11,.15); color: #fcd34d; }
-.badge--rose    { background: rgba(244,63,94,.15);  color: #fda4af; }
-.badge--gray    { background: rgba(100,116,139,.15); color: #94a3b8; }
-
-.ip-cell {
-    font-family: 'Lexend Deca', monospace;
-    font-size: 11px;
-    color: var(--text-muted);
-    white-space: nowrap;
+.action-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
+.action--indigo { background: var(--accent-soft); color: var(--accent); }
+.action--indigo .action-dot { background: var(--accent); }
+
+.action--gray { background: var(--surface-2); color: var(--text-secondary); }
+.action--gray .action-dot { background: var(--text-muted); }
+
+.action--green { background: rgba(16,185,129,.12); color: var(--emerald); }
+.action--green .action-dot { background: var(--emerald); }
+
+.action--sky { background: rgba(14,165,233,.12); color: var(--sky); }
+.action--sky .action-dot { background: var(--sky); }
+
+.action--rose { background: rgba(244,63,94,.12); color: var(--rose); }
+.action--rose .action-dot { background: var(--rose); }
+
+.action--amber { background: rgba(245,158,11,.12); color: var(--amber); }
+.action--amber .action-dot { background: var(--amber); }
+
+/* ── Utils ───────────────────────────────────────────────────────── */
+.text-mono { font-family: 'Lexend Deca', monospace; }
 .text-muted { color: var(--text-muted); }
+.text-sm { font-size: 12px; }
 
-/* Pagination */
-.pagination-bar {
+/* ── Pagination ──────────────────────────────────────────────────── */
+.table-info-bar {
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-bottom: 1px solid rgba(51,65,85,.4);
+}
+.pagination {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px;
-    border-top: 1px solid rgba(51,65,85,.4);
-}
-.pagination-info { font-size: 12px; color: var(--text-muted); }
-.pagination-controls { display: flex; gap: 8px; }
-
-/* Buttons */
-.btn {
-    display: inline-flex;
-    align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 9px 18px;
+    gap: 4px;
+    padding: 16px;
+}
+.page-btn {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
     border-radius: var(--radius-sm);
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 600;
-    font-size: 13px;
+    background: none;
+    border: 1px solid var(--surface-2);
+    color: var(--text-muted);
     cursor: pointer;
-    border: none;
     text-decoration: none;
     transition: all var(--transition);
 }
-.btn-sm { font-size: 12px; padding: 6px 12px; }
+.page-btn:hover { border-color: var(--accent); color: var(--accent); }
+.page-btn--disabled { opacity: .4; pointer-events: none; }
+.page-num {
+    min-width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: 'Lexend Deca', sans-serif;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all var(--transition);
+    padding: 0 6px;
+}
+.page-num:hover { color: var(--accent); background: var(--accent-soft); }
+.page-num--active { background: var(--accent); color: white; font-weight: 600; }
+.page-ellipsis { color: var(--text-muted); padding: 0 4px; }
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+.empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px 20px; gap: 12px;
+    color: var(--text-muted);
+}
+.empty-state svg { opacity: .4; }
+.empty-state p { font-size: 14px; }
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    font-family: 'Lexend Deca', sans-serif; font-weight: 600; font-size: 13px;
+    cursor: pointer; border: none; text-decoration: none;
+    transition: all var(--transition);
+}
+.btn-sm { padding: 7px 14px; font-size: 12px; }
 .btn-primary { background: var(--accent); color: white; }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-ghost { background: none; color: var(--text-secondary); border: 1px solid var(--surface-2); }
 .btn-ghost:hover { border-color: var(--surface-3); color: var(--text-primary); }
-.btn-ghost:disabled { opacity: .4; cursor: not-allowed; }
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 48px 20px;
-    color: var(--text-muted);
-}
-.empty-state svg { margin-bottom: 12px; opacity: .5; }
-.empty-state p { font-size: 14px; }
 
 @media (max-width: 768px) {
-    .page-header { flex-direction: column; align-items: stretch; }
-    .filter-bar { flex-direction: column; align-items: stretch; }
-    .filter-tabs { flex-wrap: wrap; }
-    .filter-form { width: 100%; }
-    .stats-bar { flex-direction: column; gap: 12px; }
-    .stat-divider { width: 100%; height: 1px; }
-    .pagination-bar { flex-direction: column; gap: 10px; }
+    .filter-row { grid-template-columns: 1fr 1fr; }
+    .data-table th:nth-child(4),
+    .data-table td:nth-child(4) { display: none; }
+}
+@media (max-width: 480px) {
+    .filter-row { grid-template-columns: 1fr; }
     .data-table th:nth-child(5),
-    .data-table td:nth-child(5),
-    .data-table th:nth-child(6),
-    .data-table td:nth-child(6) { display: none; }
+    .data-table td:nth-child(5) { display: none; }
 }
 </style>
