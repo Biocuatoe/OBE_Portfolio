@@ -97,8 +97,48 @@ $isFullyComplete  = ($fullyGradedCount === $totalStudents && $totalStudents > 0 
     </div>
 </div>
 
-<!-- Toolbar -->
-<div class="grading-toolbar">
+<!-- Stats UI (B6) -->
+<div id="gradingStatsTab" style="margin-top:16px;display:none;">
+    <div class="grading-stats-panel">
+        <div style="display:flex;gap:16px;align-items:flex-start;">
+            <div style="flex:1;min-width:360px;">
+                <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Phân bố điểm</h3>
+                <div id="gradeDistributionBars" style="display:flex;gap:10px;align-items:flex-end;height:220px;">
+                </div>
+            </div>
+            <div style="flex:1;min-width:320px;">
+                <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Hoàn thành chấm điểm</h3>
+                <div class="gop-track" style="height:10px;background:var(--surface-2);">
+                    <div class="gop-fill" id="statsGopFill" style="width:0%;height:10px;"></div>
+                </div>
+                <div id="statsGopCount" style="margin-top:8px;color:var(--text-secondary);font-size:12px;">—</div>
+                <div id="statsDistributionText" style="margin-top:14px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text-secondary);"></div>
+            </div>
+        </div>
+
+        <div style="margin-top:18px;">
+            <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Bảng stats theo criteria</h3>
+            <div class="table-scroll" style="border:1px solid var(--surface-2);border-radius:10px;overflow:hidden;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                    <tr>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:left;font-size:11px;color:var(--text-muted);">Criteria</th>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Avg</th>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Min</th>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Max</th>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Đã chấm</th>
+                    </tr>
+                    </thead>
+                    <tbody id="statsCriteriaRows">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grading-toolbar" style="margin-top:16px;">
+
     <div class="save-status-bar" id="saveStatusBar">
         <div class="save-dots"><span></span><span></span><span></span></div>
         <span class="save-text" id="saveText">Tất cả thay đổi đã được lưu</span>
