@@ -100,10 +100,15 @@ async function saveScore(input) {
     setInputState(input, indicator, 'saving');
     setSaving();
 
+    // feedback textarea (nếu có)
+    const feedbackEl = document.querySelector(`textarea.score-feedback[data-student="${studentId}"][data-rubric="${rubricId}"]`);
+    const feedback = feedbackEl ? (feedbackEl.value ?? '').trim() : null;
+
     const payload = {
         student_id : studentId,
         rubric_id  : rubricId,
         score      : score,
+        feedback   : feedback,
         _token     : window.getCsrfToken(),
     };
 
@@ -124,6 +129,8 @@ async function saveScore(input) {
                 window.updateRowStatus(studentId);
             }
             // Reset về idle sau 2 giây
+            // đánh dấu đã sạch
+            input.classList.remove('dirty');
             setTimeout(() => setInputState(input, indicator, 'idle'), 2000);
         } else {
             throw new Error(data.message || 'Lỗi không xác định');
@@ -150,10 +157,10 @@ function moveFocus(currentInput, direction) {
     const rowSize = document.querySelectorAll('thead th.th-rubric').length;
 
     switch (direction) {
-        case 'next':  nextIdx = idx + 1;        break;
-        case 'prev':  nextIdx = idx - 1;        break;
-        case 'down':  nextIdx = idx + rowSize;  break;
-        case 'up':    nextIdx = idx - rowSize;  break;
+        case 'next':  nextIdx = idx + 1;       break;
+        case 'prev':  nextIdx = idx - 1;       break;
+        case 'down':  nextIdx = idx + rowSize; break;
+        case 'up':    nextIdx = idx - rowSize; break;
         default:      return;
     }
 
@@ -167,7 +174,10 @@ function moveFocus(currentInput, direction) {
 function initGrading() {
     document.querySelectorAll('.score-input').forEach(input => {
         // Input event → debounced save
-        input.addEventListener('input', () => debouncedSave(input));
+        input.addEventListener('input', () => {
+            input.classList.add('dirty');
+            debouncedSave(input);
+        });
 
         // Blur → lưu ngay
         input.addEventListener('blur', () => {
@@ -182,7 +192,7 @@ function initGrading() {
             switch (e.key) {
                 case 'Enter':
                     e.preventDefault();
-                    moveFocus(input, 'down');
+                    moveFocus(input, 'next');
                     break;
                 case 'Tab':
                     // Tab mặc định, không override
@@ -213,18 +223,23 @@ function initGrading() {
         }
     });
 
-    // Batch save: Ctrl+S
+    // Batch save: Ctrl+S => chỉ lưu pending (dirty) + feedback tương ứng
     document.addEventListener('keydown', async (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
             e.preventDefault();
-            window.Toast?.info('Đang lưu tất cả điểm...');
-            const inputs = document.querySelectorAll('.score-input');
-            for (const input of inputs) {
-                if (input.value !== '' && !isNaN(parseFloat(input.value))) {
-                    await saveScore(input);
-                }
+            window.Toast?.info('Đang lưu pending...');
+
+            const pending = Array.from(document.querySelectorAll('.score-input.dirty'));
+            if (pending.length === 0) {
+                window.Toast?.success('Không có thay đổi cần lưu');
+                return;
             }
-            window.Toast?.success('Đã lưu tất cả điểm!');
+
+            for (const input of pending) {
+                await saveScore(input);
+            }
+
+            window.Toast?.success('Đã lưu pending!');
         }
     });
 }
