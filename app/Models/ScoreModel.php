@@ -18,139 +18,17 @@ class ScoreModel extends BaseModel
     // ── Lưu điểm một tiêu chí rubric ────────────────────────────────
 
     /**
-     * Upsert điểm và tự động kích hoạt tính lại attainment
-     *
-     * @throws RuntimeException nếu score vượt max_score
+     * Upsert điểm và tự động kích hoạt tính lại attainment.
      */
     public function saveScore(int $studentId, int $rubricId, float $score, ?string $feedback = null): void
     {
-        // Kiểm tra max_score
-        $rubric = $this->db->fetchOne(
-            "SELECT r.*, c.course_id FROM rubrics r JOIN clos c ON c.id = r.clo_id WHERE r.id = ?",
-            [$rubricId]
-        );
-
-        if (!$rubric) {
-            throw new \InvalidArgumentException("Rubric ID {$rubricId} không tồn tại.");
-        }
-
-        if ($score < 0 || $score > (float)$rubric['max_score']) {
-            throw new \RangeException("Điểm {$score} vượt quá điểm tối đa {$rubric['max_score']}.");
-        }
-
-        $this->db->beginTransaction();
-        try {
-            // Upsert student_scores
-            $this->db->query(
-                "INSERT INTO student_scores (student_id, rubric_id, score, feedback)
-                 VALUES (?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE score = VALUES(score), feedback = VALUES(feedback)",
-                [$studentId, $rubricId, $score, $feedback]
-            );
-
-            // Tính lại CLO attainment cho môn này
-            $this->recalculateCloAttainment($studentId, (int)$rubric['course_id']);
-
-            // Tính lại PLO attainment dựa trên CLO mới
-            $this->recalculatePloAttainment($studentId, (int)$rubric['course_id']);
-
-            $this->db->commit();
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
-    }
-
-    // ── THUẬT TOÁN 1: Tính CLO Attainment ───────────────────────────
-
-    /**
-     * Tính % đạt từng CLO của sinh viên trong 1 môn học
-     *
-     * Công thức:
-     *   CLO_achieved% = SUM(student_score) / SUM(rubric.max_score) × 100
-     *   (Chỉ tính rubric thuộc assessment đã published của môn)
-     */
-    private function recalculateCloAttainment(int $studentId, int $courseId): void
-    {
-        // Lấy tất cả CLO của môn
-        $clos = $this->db->fetchAll(
-            "SELECT id FROM clos WHERE course_id = ?",
-            [$courseId]
-        );
-
-        foreach ($clos as $clo) {
-            $result = $this->db->fetchOne(
-                "SELECT 
-                    COALESCE(SUM(ss.score), 0)       AS earned,
-                    COALESCE(SUM(r.max_score), 0)    AS total
-                 FROM rubrics r
-                 JOIN assessments a ON a.id = r.assessment_id
-                 LEFT JOIN student_scores ss ON ss.rubric_id = r.id AND ss.student_id = ?
-                 WHERE r.clo_id = ?
-                   AND a.is_published = 1",
-                [$studentId, $clo['id']]
-            );
-
-            $pct = ($result['total'] > 0)
-                ? round(($result['earned'] / $result['total']) * 100, 2)
-                : 0.00;
-
-            $this->db->query(
-                "INSERT INTO clo_attainments (student_id, clo_id, achieved_percentage)
-                 VALUES (?, ?, ?)
-                 ON DUPLICATE KEY UPDATE achieved_percentage = VALUES(achieved_percentage), calculated_at = NOW()",
-                [$studentId, $clo['id'], $pct]
-            );
-        }
-    }
-
-    // ── THUẬT TOÁN 2: Tính PLO Attainment ───────────────────────────
-
-    /**
-     * Tính % đạt từng PLO dựa trên CLO đã tính
-     *
-     * Công thức:
-     *   PLO_achieved% = SUM( CLO_achieved% × mapping.weight ) / SUM(mapping.weight)
-     *   (Weighted average theo trọng số ánh xạ)
-     */
-    private function recalculatePloAttainment(int $studentId, int $courseId): void
-    {
-        // Lấy tất cả PLO có liên quan đến môn này (qua CLO-PLO mapping)
-        $plos = $this->db->fetchAll(
-            "SELECT DISTINCT m.plo_id
-             FROM clo_plo_mappings m
-             JOIN clos c ON c.id = m.clo_id
-             WHERE c.course_id = ?",
-            [$courseId]
-        );
-
-        foreach ($plos as $plo) {
-            $result = $this->db->fetchOne(
-                "SELECT
-                    SUM(ca.achieved_percentage * m.weight) AS weighted_sum,
-                    SUM(m.weight)                          AS total_weight
-                 FROM clo_plo_mappings m
-                 JOIN clos c ON c.id = m.clo_id
-                 JOIN clo_attainments ca ON ca.clo_id = m.clo_id AND ca.student_id = ?
-                 WHERE m.plo_id = ?
-                   AND c.course_id = ?",
-                [$studentId, $plo['plo_id'], $courseId]
-            );
-
-            $pct = (isset($result['total_weight']) && $result['total_weight'] > 0)
-                ? round($result['weighted_sum'] / $result['total_weight'], 2)
-                : 0.00;
-
-            $this->db->query(
-                "INSERT INTO plo_attainments (student_id, plo_id, achieved_percentage)
-                 VALUES (?, ?, ?)
-                 ON DUPLICATE KEY UPDATE achieved_percentage = VALUES(achieved_percentage), calculated_at = NOW()",
-                [$studentId, $plo['plo_id'], $pct]
-            );
-        }
+        require_once __DIR__ . '/../../core/ScoreService.php';
+        $service = new ScoreService();
+        $service->saveScoreAndRecalculate($studentId, $rubricId, $score, $feedback);
     }
 
     // ── Query helpers ────────────────────────────────────────────────
+
 
     /**
      * Lấy bảng điểm chi tiết cho giảng viên (Grading Sheet)
