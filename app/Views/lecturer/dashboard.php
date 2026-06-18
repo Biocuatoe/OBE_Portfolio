@@ -1,6 +1,16 @@
 <?php /* app/Views/lecturer/dashboard.php */ ?>
 <?php $pageTitle = 'Tổng quan giảng dạy'; ?>
 
+<!-- Breadcrumb -->
+<nav class="breadcrumb-nav">
+    <a href="/lecturer/dashboard" class="breadcrumb-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Tổng quan giảng dạy
+    </a>
+</nav>
+
 <?php if (!empty($pending_grading)): ?>
 <div class="alert-banner">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
@@ -89,6 +99,105 @@
         </div>
         <?php endforeach; ?>
     </div>
+</div>
+<?php endif; ?>
+
+<!-- Average Score Chart -->
+<?php if (!empty($avg_scores)): ?>
+<div class="section-card">
+    <div class="section-header">
+        <h3 class="section-title">Điểm trung bình các môn học</h3>
+        <span class="section-badge"><?= count($avg_scores) ?> môn</span>
+    </div>
+    <div class="chart-container">
+        <canvas id="averageScoreChart" width="400" height="100"></canvas>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const avgScores = <?= json_encode($avg_scores) ?>;
+        
+        if (avgScores.length > 0) {
+            const ctx = document.getElementById('averageScoreChart')?.getContext('2d');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: avgScores.map(item => item.course_code),
+                        datasets: [{
+                            label: 'Điểm trung bình',
+                            data: avgScores.map(item => parseFloat(item.avg_score) || 0),
+                            backgroundColor: [
+                                'rgba(99, 102, 241, 0.8)',
+                                'rgba(14, 165, 233, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(244, 63, 94, 0.8)',
+                            ],
+                            borderColor: 'transparent',
+                            borderRadius: 8,
+                            borderSkipped: false,
+                            hoverBackgroundColor: 'rgba(99, 102, 241, 1)',
+                        }]
+                    },
+                    options: {
+                        indexAxis: avgScores.length > 5 ? 'y' : 'x',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    font: { size: 12, weight: '500' },
+                                    color: '#f1f5f9',
+                                    usePointStyle: true,
+                                    padding: 20,
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                borderColor: 'rgba(51, 65, 85, 0.5)',
+                                borderWidth: 1,
+                                padding: 10,
+                                titleFont: { size: 12, weight: '600' },
+                                bodyFont: { size: 12 },
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Điểm: ' + context.parsed.y.toFixed(1) + ' / 10';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: false,
+                                grid: {
+                                    color: 'rgba(51, 65, 85, 0.3)',
+                                    drawBorder: false,
+                                },
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: { size: 11 }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                grid: {
+                                    color: 'rgba(51, 65, 85, 0.3)',
+                                    drawBorder: false,
+                                },
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: { size: 11 }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    });
+    </script>
 </div>
 <?php endif; ?>
 
