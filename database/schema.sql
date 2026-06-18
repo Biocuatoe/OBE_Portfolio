@@ -1,6 +1,6 @@
 -- ================================================================
 -- OBE & E-PORTFOLIO SYSTEM - DATABASE SCHEMA
--- Version: 2.0 | Standard: 3NF | Engine: InnoDB
+-- Version: 2.0 | Standard: 3NF | Engine: InnoDB/MyPHPAdmin
 -- ================================================================
 
 SET NAMES utf8mb4;
