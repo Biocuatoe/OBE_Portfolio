@@ -50,7 +50,7 @@ class ScoreModel extends BaseModel
              FROM enrollments e
              JOIN course_assignments ca ON ca.id = e.assignment_id
              JOIN users u ON u.id = e.student_id
-             CROSS JOIN rubrics r ON r.assessment_id = ?
+             JOIN rubrics r ON r.assessment_id = ?
              JOIN clos cl ON cl.id = r.clo_id
              LEFT JOIN student_scores ss ON ss.student_id = e.student_id AND ss.rubric_id = r.id
              WHERE ca.id = (SELECT assignment_id FROM assessments WHERE id = ?)
@@ -90,8 +90,12 @@ class ScoreModel extends BaseModel
                 c.bloom_level,
                 COALESCE(ca.achieved_percentage, 0) AS achieved_percentage
              FROM clos c
+             JOIN rubrics r ON r.clo_id = c.id
+             JOIN assessments a ON a.id = r.assessment_id
              LEFT JOIN clo_attainments ca ON ca.clo_id = c.id AND ca.student_id = ?
              WHERE c.course_id = ?
+               AND a.is_published = 1
+             GROUP BY c.id, c.code, c.description, c.bloom_level, ca.achieved_percentage
              ORDER BY c.code",
             [$studentId, $courseId]
         );
