@@ -30,31 +30,29 @@
                 ? '/admin/users?role=' . urlencode($rKey) . ($search_query ? '&search=' . urlencode($search_query) : '')
                 : '/admin/users' . ($search_query ? '?search=' . urlencode($search_query) : '');
         ?>
-            <a href="<?= $href ?>" class="filter-pill <?= $isActive ? 'filter-pill--active' : '' ?>">
+            <a href="<?= $href ?>" class="filter-pill <?= $isActive ? 'active' : '' ?>">
                 <?= htmlspecialchars($rInfo['label']) ?>
-                <span class="filter-pill-count"><?= $count ?></span>
+                <span class="count"><?= $count ?></span>
             </a>
         <?php endforeach; ?>
     </div>
 
-    <form method="GET" action="/admin/users" class="search-form" id="searchForm">
+    <form method="GET" action="/admin/users" class="search-bar" id="searchForm">
         <?php if ($filter_role): ?>
             <input type="hidden" name="role" value="<?= htmlspecialchars($filter_role) ?>">
         <?php endif; ?>
-        <div class="search-wrapper">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" name="search" class="search-input" placeholder="Tìm kiếm người dùng..." value="<?= htmlspecialchars($search_query) ?>" id="searchInput">
-            <?php if ($search_query): ?>
-                <button type="button" class="search-clear" id="searchClear" title="Xóa tìm kiếm">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            <?php endif; ?>
-        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" name="search" class="form-control" style="min-width:220px;padding-left:36px" placeholder="Tìm kiếm người dùng..." value="<?= htmlspecialchars($search_query) ?>" id="searchInput">
+        <?php if ($search_query): ?>
+            <button type="button" class="btn-icon" id="searchClear" title="Xóa tìm kiếm" style="position:absolute;right:8px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        <?php endif; ?>
     </form>
 </div>
 
 <!-- Users Table Card -->
-<div class="section-card">
+<div class="card">
     <div class="table-info-bar">
         <?php
         $total = $total_pages * 20;
@@ -64,8 +62,8 @@
         Hiển thị <?= $from ?>-<?= $to ?> trên <?= $total ?> kết quả
     </div>
 
-    <div class="table-wrapper">
-        <table class="data-table" id="usersTable">
+    <div class="table-wrap">
+        <table class="data-table striped" id="usersTable">
             <thead>
                 <tr>
                     <th>Người dùng</th>
@@ -91,10 +89,10 @@
                     <?php foreach ($users as $u): ?>
                         <?php
                             $roleClass = match($u['role']) {
-                                'admin'    => 'badge--indigo',
-                                'lecturer' => 'badge--sky',
-                                'student'  => 'badge--emerald',
-                                default    => 'badge--gray',
+                                'admin'    => 'badge badge-accent',
+                                'lecturer' => 'badge badge-sky',
+                                'student'  => 'badge badge-emerald',
+                                default    => 'badge badge-gray',
                             };
                             $roleLabel = match($u['role']) {
                                 'admin'    => 'Admin',
@@ -128,13 +126,13 @@
                                 <span class="cell-sub"><?= htmlspecialchars($u['email']) ?></span>
                             </td>
                             <td>
-                                <span class="role-badge <?= $roleClass ?>"><?= $roleLabel ?></span>
+                                <span class="<?= $roleClass ?>"><?= $roleLabel ?></span>
                             </td>
                             <td>
                                 <?php if ($isActive): ?>
-                                    <span class="status-pill status-pill--active">Hoạt động</span>
+                                    <span class="status-active">Hoạt động</span>
                                 <?php else: ?>
-                                    <span class="status-pill status-pill--inactive">Bị khoá</span>
+                                    <span class="status-inactive">Bị khoá</span>
                                 <?php endif; ?>
                             </td>
                             <td class="text-center text-muted text-sm">
@@ -166,6 +164,9 @@
     <!-- Pagination -->
     <?php if ($total_pages > 1): ?>
         <div class="pagination">
+            <span class="pagination-info">
+                Hiển thị <?= $from ?>-<?= $to ?> trên <?= $total ?> kết quả
+            </span>
             <?php
             $baseUrl = '/admin/users?page=';
             $qsParts = [];
@@ -174,11 +175,11 @@
             $qs       = $qsParts ? '&' . implode('&', $qsParts) : '';
             ?>
             <?php if ($current_page > 1): ?>
-                <a href="<?= $baseUrl . ($current_page - 1) . $qs ?>" class="page-btn">
+                <a href="<?= $baseUrl . ($current_page - 1) . $qs ?>">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
                 </a>
             <?php else: ?>
-                <span class="page-btn page-btn--disabled">
+                <span class="disabled">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
                 </span>
             <?php endif; ?>
@@ -187,29 +188,29 @@
             $start = max(1, $current_page - 2);
             $end   = min($total_pages, $current_page + 2);
             if ($start > 1): ?>
-                <a href="<?= $baseUrl . 1 . $qs ?>" class="page-num">1</a>
-                <?php if ($start > 2): ?><span class="page-ellipsis">…</span><?php endif; ?>
+                <a href="<?= $baseUrl . 1 . $qs ?>">1</a>
+                <?php if ($start > 2): ?><span class="disabled">…</span><?php endif; ?>
             <?php endif; ?>
 
             <?php for ($i = $start; $i <= $end; $i++): ?>
                 <?php if ($i === $current_page): ?>
-                    <span class="page-num page-num--active"><?= $i ?></span>
+                    <span class="active"><?= $i ?></span>
                 <?php else: ?>
-                    <a href="<?= $baseUrl . $i . $qs ?>" class="page-num"><?= $i ?></a>
+                    <a href="<?= $baseUrl . $i . $qs ?>"><?= $i ?></a>
                 <?php endif; ?>
             <?php endfor; ?>
 
             <?php if ($end < $total_pages): ?>
-                <?php if ($end < $total_pages - 1): ?><span class="page-ellipsis">…</span><?php endif; ?>
-                <a href="<?= $baseUrl . $total_pages . $qs ?>" class="page-num"><?= $total_pages ?></a>
+                <?php if ($end < $total_pages - 1): ?><span class="disabled">…</span><?php endif; ?>
+                <a href="<?= $baseUrl . $total_pages . $qs ?>"><?= $total_pages ?></a>
             <?php endif; ?>
 
             <?php if ($current_page < $total_pages): ?>
-                <a href="<?= $baseUrl . ($current_page + 1) . $qs ?>" class="page-btn">
+                <a href="<?= $baseUrl . ($current_page + 1) . $qs ?>">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                 </a>
             <?php else: ?>
-                <span class="page-btn page-btn--disabled">
+                <span class="disabled">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                 </span>
             <?php endif; ?>
@@ -232,12 +233,12 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label" for="user-username">Username <span class="required">*</span></label>
-                        <input type="text" id="user-username" name="username" class="form-input" placeholder="VD: nguyenvana" maxlength="50" autocomplete="username">
+                        <input type="text" id="user-username" name="username" class="form-control" placeholder="VD: nguyenvana" maxlength="50" autocomplete="username">
                         <span class="field-error" id="err-username"></span>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="user-email">Email <span class="required">*</span></label>
-                        <input type="email" id="user-email" name="email" class="form-input" placeholder="VD: nguyenvana@tdtu.edu.vn" autocomplete="email">
+                        <input type="email" id="user-email" name="email" class="form-control" placeholder="VD: nguyenvana@tdtu.edu.vn" autocomplete="email">
                         <span class="field-error" id="err-email"></span>
                     </div>
                 </div>
@@ -247,7 +248,7 @@
                         <label class="form-label" for="user-fullname">Họ tên <span class="required">*</span></label>
                         <div class="input-wrapper">
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <input type="text" id="user-fullname" name="full_name" class="form-input form-input--icon" placeholder="VD: Nguyễn Văn A" maxlength="100">
+                            <input type="text" id="user-fullname" name="full_name" class="form-control" style="padding-left:36px" placeholder="VD: Nguyễn Văn A" maxlength="100">
                         </div>
                         <span class="field-error" id="err-full_name"></span>
                     </div>
@@ -255,7 +256,7 @@
                         <label class="form-label" for="user-role">Vai trò <span class="required">*</span></label>
                         <div class="input-wrapper">
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            <select id="user-role" name="role" class="form-input form-input--icon">
+                            <select id="user-role" name="role" class="form-control" style="padding-left:36px">
                                 <option value="student">Sinh viên</option>
                                 <option value="lecturer">Giảng viên</option>
                                 <option value="admin">Admin</option>
@@ -269,15 +270,15 @@
                     <label class="form-label" for="user-password">Mật khẩu <span class="required" id="pwRequired">*</span></label>
                     <div class="input-wrapper">
                         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        <input type="password" id="user-password" name="password" class="form-input form-input--icon" placeholder="Ít nhất 8 ký tự" autocomplete="<?= $editMode ?? false ? 'new-password' : 'new-password' ?>">
+                        <input type="password" id="user-password" name="password" class="form-control" style="padding-left:36px" placeholder="Ít nhất 8 ký tự" autocomplete="new-password">
                     </div>
                     <span class="field-error" id="err-password"></span>
-                    <span class="field-hint" id="pwHint" style="display:none">Để trống nếu không đổi mật khẩu</span>
+                    <span class="field-hint" id="pwHint" style="display:none;font-size:11px;color:var(--text-muted);margin-top:4px;display:block">Để trống nếu không đổi mật khẩu</span>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-ghost" id="modalCancel">Hủy</button>
+                <button type="button" class="btn btn-secondary" id="modalCancel">Hủy</button>
                 <button type="submit" class="btn btn-primary" id="modalSubmit">
                     <span class="btn-label">Tạo mới</span>
                     <span class="btn-spinner" hidden>
@@ -291,14 +292,14 @@
 
 <!-- ── Toggle Confirm Modal ─────────────────────────────────────── -->
 <div class="modal-overlay" id="toggleModal" role="dialog" aria-modal="true">
-    <div class="modal modal--sm">
+    <div class="modal">
         <div class="modal-header">
             <h3 class="modal-title" id="toggleModalTitle">Khoá tài khoản</h3>
             <button class="modal-close" id="toggleModalClose" aria-label="Đóng">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="text-align:center">
             <div class="confirm-icon" id="toggleIcon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </div>
@@ -306,7 +307,7 @@
             <p class="confirm-sub">Người dùng sẽ không thể đăng nhập khi tài khoản bị khoá.</p>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-ghost" id="toggleCancel">Hủy</button>
+            <button class="btn btn-secondary" id="toggleCancel">Hủy</button>
             <button class="btn btn-primary" id="toggleConfirm">
                 <span class="btn-label" id="toggleBtnLabel">Khoá</span>
                 <span class="btn-spinner" hidden>
@@ -364,7 +365,8 @@
         submitBtn.querySelector('.btn-label').textContent = isEdit ? 'Lưu thay đổi' : 'Tạo mới';
 
         document.getElementById('pwRequired').style.display = isEdit ? 'none' : 'inline';
-        document.getElementById('pwHint').style.display = isEdit ? 'block' : 'none';
+        const pwHint = document.getElementById('pwHint');
+        if (pwHint) pwHint.style.display = isEdit ? 'block' : 'none';
         document.getElementById('user-password').placeholder = isEdit ? 'Để trống nếu không đổi' : 'Ít nhất 8 ký tự';
 
         if (isEdit && row) {
@@ -415,7 +417,6 @@
             password:  document.getElementById('user-password').value,
         };
 
-        // If edit mode and password is empty, omit it
         if (editId && payload.password === '') {
             delete payload.password;
         }
@@ -459,7 +460,7 @@
             (isActivate ? 'Kích hoạt' : 'Khoá') + ' tài khoản của <strong>' + fullname + '</strong>?';
         document.getElementById('toggleBtnLabel').textContent = isActivate ? 'Kích hoạt' : 'Khoá';
         document.getElementById('toggleConfirm').className =
-            'btn ' + (isActivate ? 'btn-success' : 'btn-warning');
+            'btn ' + (isActivate ? 'btn-primary' : 'btn-primary');
 
         const iconEl = document.getElementById('toggleIcon');
         if (isActivate) {
@@ -517,7 +518,6 @@
     searchInput?.addEventListener('input', function() {
         clearTimeout(searchDebounce);
         searchDebounce = setTimeout(() => {
-            // Quick client-side filter for immediate feedback
             const query = this.value.toLowerCase().trim();
             document.querySelectorAll('.user-row').forEach(row => {
                 const text = [
@@ -561,26 +561,12 @@
 }
 .page-sub { font-size: 13px; color: var(--text-muted); }
 
-.table-wrapper { overflow-x: auto; }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th {
-    text-align: left;
+.table-info-bar {
     padding: 10px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .5px;
+    font-size: 12px;
     color: var(--text-muted);
-    border-bottom: 1px solid var(--surface-2);
-    white-space: nowrap;
-}
-.data-table td {
-    padding: 12px 14px;
     border-bottom: 1px solid rgba(51,65,85,.4);
-    vertical-align: middle;
 }
-.data-table tbody tr:hover td { background: rgba(51,65,85,.25); }
-.data-table tbody tr:last-child td { border-bottom: none; }
 
 /* User cell */
 .user-cell { display: flex; align-items: center; gap: 10px; }
@@ -599,36 +585,8 @@
 .user-avatar--default  { background: var(--surface-2); color: var(--text-secondary); }
 
 .cell-primary { font-weight: 500; font-size: 13px; color: var(--text-primary); }
-.cell-sub { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; max-width: 200px; white-space: nowrap; }
+.cell-sub { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; max-width: 200px; white-space: nowrap; display: block; }
 .mono-text { font-family: 'Lexend Deca', monospace; font-size: 12px; color: var(--text-secondary); }
-
-/* Role badges */
-.role-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    font-family: 'Lexend Deca', sans-serif;
-}
-.badge--indigo  { background: var(--accent-soft); color: var(--accent); }
-.badge--sky     { background: rgba(14,165,233,.12); color: var(--sky); }
-.badge--emerald { background: rgba(16,185,129,.12); color: var(--emerald); }
-.badge--gray    { background: var(--surface-2); color: var(--text-muted); }
-
-/* Status pills */
-.status-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    font-family: 'Lexend Deca', sans-serif;
-}
-.status-pill--active   { background: rgba(16,185,129,.15); color: var(--emerald); }
-.status-pill--inactive { background: rgba(100,116,139,.15); color: var(--text-muted); }
 
 /* Row actions */
 .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
@@ -653,263 +611,7 @@
 .text-muted  { color: var(--text-muted); }
 .text-sm     { font-size: 12px; }
 
-/* ── Filter bar ──────────────────────────────────────────────────── */
-.filter-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-}
-.filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
-.filter-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    font-family: 'Lexend Deca', sans-serif;
-    color: var(--text-secondary);
-    background: var(--surface-1);
-    border: 1px solid var(--surface-2);
-    text-decoration: none;
-    transition: all var(--transition);
-}
-.filter-pill:hover { border-color: var(--surface-3); color: var(--text-primary); }
-.filter-pill--active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.filter-pill-count {
-    font-size: 10px;
-    background: var(--surface-2);
-    color: var(--text-muted);
-    padding: 1px 6px;
-    border-radius: 10px;
-}
-.filter-pill--active .filter-pill-count { background: var(--accent-soft); color: var(--accent); }
-
-/* Search */
-.search-form { display: flex; }
-.search-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-.search-icon {
-    position: absolute;
-    left: 10px;
-    width: 14px; height: 14px;
-    color: var(--text-muted);
-    pointer-events: none;
-}
-.search-input {
-    background: var(--surface-1);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-sm);
-    padding: 7px 32px 7px 32px;
-    font-family: 'Lexend Deca', sans-serif;
-    font-size: 13px;
-    color: var(--text-primary);
-    width: 240px;
-    transition: border-color var(--transition);
-}
-.search-input::placeholder { color: var(--text-muted); }
-.search-input:focus { outline: none; border-color: var(--accent); }
-.search-clear {
-    position: absolute; right: 8px;
-    background: none; border: none;
-    color: var(--text-muted); cursor: pointer;
-    padding: 2px;
-    display: flex; align-items: center;
-    transition: color var(--transition);
-}
-.search-clear svg { width: 12px; height: 12px; }
-.search-clear:hover { color: var(--text-primary); }
-
-/* Table info bar */
-.table-info-bar {
-    padding: 10px 14px;
-    font-size: 12px;
-    color: var(--text-muted);
-    border-bottom: 1px solid rgba(51,65,85,.4);
-}
-
-/* Pagination */
-.pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 16px;
-}
-.page-btn {
-    width: 30px; height: 30px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: var(--radius-sm);
-    background: none;
-    border: 1px solid var(--surface-2);
-    color: var(--text-muted);
-    cursor: pointer;
-    text-decoration: none;
-    transition: all var(--transition);
-}
-.page-btn:hover { border-color: var(--accent); color: var(--accent); }
-.page-btn--disabled { opacity: .4; pointer-events: none; }
-.page-num {
-    min-width: 30px; height: 30px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-family: 'Lexend Deca', sans-serif;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all var(--transition);
-    padding: 0 6px;
-}
-.page-num:hover { color: var(--accent); background: var(--accent-soft); }
-.page-num--active { background: var(--accent); color: white; font-weight: 600; }
-.page-ellipsis { color: var(--text-muted); padding: 0 4px; }
-
-/* Empty state */
-.empty-state {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 48px 20px; gap: 12px;
-    color: var(--text-muted);
-}
-.empty-state svg { opacity: .4; }
-.empty-state p { font-size: 14px; }
-
-/* Section card */
-.section-card {
-    background: var(--surface-1);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-
-/* Modal */
-.modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.6);
-    backdrop-filter: blur(4px);
-    z-index: 1000;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity .25s;
-}
-.modal-overlay.open { opacity: 1; pointer-events: auto; }
-
-.modal {
-    background: var(--surface-1);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-lg);
-    width: 100%; max-width: 520px;
-    box-shadow: var(--shadow-card);
-    transform: translateY(12px) scale(.98);
-    transition: transform .25s;
-    overflow: hidden;
-}
-.modal-overlay.open .modal { transform: translateY(0) scale(1); }
-.modal--sm { max-width: 400px; }
-.modal--sm .modal-body { text-align: center; }
-
-.modal-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 20px 16px;
-    border-bottom: 1px solid var(--surface-2);
-}
-.modal-title {
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--text-primary);
-}
-.modal-close {
-    background: none; border: none;
-    color: var(--text-muted); cursor: pointer;
-    padding: 4px; border-radius: var(--radius-sm);
-    transition: all var(--transition);
-}
-.modal-close svg { width: 18px; height: 18px; }
-.modal-close:hover { background: var(--surface-2); color: var(--text-primary); }
-
-.modal-body { padding: 20px; }
-.modal-footer {
-    display: flex; justify-content: flex-end; gap: 10px;
-    padding: 14px 20px;
-    border-top: 1px solid var(--surface-2);
-}
-
-/* Buttons */
-.btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 9px 18px;
-    border-radius: var(--radius-sm);
-    font-family: 'Lexend Deca', sans-serif; font-weight: 600; font-size: 13px;
-    cursor: pointer; border: none; text-decoration: none;
-    transition: all var(--transition);
-}
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
-.btn-ghost { background: none; color: var(--text-secondary); border: 1px solid var(--surface-2); }
-.btn-ghost:hover { border-color: var(--surface-3); color: var(--text-primary); }
-.btn-warning { background: var(--amber); color: white; }
-.btn-warning:hover { background: #d97706; }
-.btn-warning:disabled { opacity: .6; cursor: not-allowed; }
-.btn-success { background: var(--emerald); color: white; }
-.btn-success:hover { background: #059669; }
-.btn-success:disabled { opacity: .6; cursor: not-allowed; }
-
-.btn-spinner svg { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* Form */
-.form-group { margin-bottom: 16px; }
-.form-group:last-child { margin-bottom: 0; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-label {
-    display: block;
-    font-size: 13px; font-weight: 500;
-    color: var(--text-secondary); margin-bottom: 6px;
-}
-.required { color: var(--rose); }
-.form-input {
-    width: 100%;
-    background: var(--surface-0);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-sm);
-    padding: 9px 12px;
-    font-family: 'Lexend Deca', sans-serif;
-    font-size: 13px;
-    color: var(--text-primary);
-    transition: border-color var(--transition);
-    box-sizing: border-box;
-}
-.form-input::placeholder { color: var(--text-muted); }
-.form-input:focus { outline: none; border-color: var(--accent); }
-.form-input--icon { padding-left: 36px; }
-select.form-input { cursor: pointer; appearance: none; }
-select.form-input option { background: var(--surface-1); color: var(--text-primary); }
-
-.input-wrapper { position: relative; }
-.input-icon {
-    position: absolute; left: 10px; top: 50%;
-    transform: translateY(-50%);
-    width: 15px; height: 15px;
-    color: var(--text-muted);
-    pointer-events: none;
-}
-
-.field-error {
-    display: none;
-    font-size: 11px; color: var(--rose);
-    margin-top: 4px;
-}
-.field-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: block; }
-.input--error { border-color: var(--rose) !important; }
-
+/* Confirm modal extras */
 .confirm-icon {
     width: 52px; height: 52px;
     border-radius: 50%;
@@ -920,12 +622,26 @@ select.form-input option { background: var(--surface-1); color: var(--text-prima
 .confirm-text { font-size: 15px; color: var(--text-primary); margin-bottom: 6px; }
 .confirm-sub { font-size: 12px; color: var(--text-muted); }
 
+/* Form */
+.required { color: var(--rose); }
+.field-error {
+    display: none;
+    font-size: 11px; color: var(--rose);
+    margin-top: 4px;
+}
+.input--error { border-color: var(--rose) !important; }
+.field-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: block; }
+
+/* Buttons */
+.btn-spinner svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 @media (max-width: 640px) {
     .page-header { flex-direction: column; align-items: stretch; }
     .filter-bar { flex-direction: column; align-items: stretch; }
     .filter-pills { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
     .form-row { grid-template-columns: 1fr; }
-    .search-input { width: 100%; }
+    .search-bar .form-control { width: 100%; }
     .data-table th:nth-child(2),
     .data-table td:nth-child(2),
     .data-table th:nth-child(3),

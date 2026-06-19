@@ -1,7 +1,7 @@
 <?php /* app/Views/admin/mapping_matrix.php */ ?>
 
-<div class="section-card">
-    <div class="section-header">
+<div class="card">
+    <div class="card-header">
         <div class="section-title-group">
             <span class="course-badge"><?= htmlspecialchars($course['code']) ?></span>
             <h3 class="section-title">Ma trận ánh xạ CLO → PLO</h3>
@@ -11,7 +11,7 @@
                 <span class="legend-dot" style="background:var(--accent)"></span><span class="legend-text">Có ánh xạ (nhập 0-100%)</span>
                 <span class="legend-dot" style="background:var(--surface-2)"></span><span class="legend-text">Không ánh xạ (để trống)</span>
             </div>
-            <button id="exportCsv" class="btn btn-ghost btn-sm">
+            <button id="exportCsv" class="btn btn-secondary btn-sm">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    <div class="matrix-scroll">
+    <div class="table-wrap">
         <table class="mapping-table">
             <thead>
                 <tr>
@@ -115,10 +115,8 @@
 <meta name="csrf-token" content="<?= htmlspecialchars($csrf_token) ?>">
 
 <style>
-.matrix-help { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
-.matrix-scroll { overflow-x:auto; }
-.matrix-legend { display:flex; align-items:center; gap:10px; }
 .header-right { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.matrix-help { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
 
 /* Warning banners */
 .matrix-warnings { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
@@ -134,12 +132,6 @@
     color: #fda4af;
 }
 .warning-banner svg { flex-shrink:0; color: var(--rose); }
-
-/* Buttons */
-.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 18px; border-radius:var(--radius-sm); font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:13px; cursor:pointer; border:none; text-decoration:none; transition:all var(--transition); }
-.btn-ghost { background:none; color:var(--text-secondary); border:1px solid var(--surface-2); }
-.btn-ghost:hover { border-color:var(--surface-3); color:var(--text-primary); }
-.btn-sm { font-size:12px; padding:7px 14px; }
 
 .mapping-table { width:100%; border-collapse:collapse; white-space:nowrap; }
 .mapping-table th,
@@ -176,7 +168,6 @@
 .mtd-row-total, .mtd-col-total { text-align:center; font-size:12px; }
 .row-total, .col-total { color:var(--text-muted); font-weight:500; }
 .row-total.has-value, .col-total.has-value { color:var(--text-primary); font-weight:700; font-family:'Lexend Deca',sans-serif; }
-/* Over-limit states */
 .row-total.over-limit { color:var(--rose); font-weight:800; }
 .row-total.has-value.over-limit { background:rgba(244,63,94,.15); color:var(--rose); border-radius:4px; padding:2px 6px; }
 .col-total.over-limit { color:var(--rose); font-weight:800; }
@@ -191,7 +182,6 @@ tfoot td { background:var(--surface-0); font-size:12px; font-weight:600; padding
 @keyframes pulseDot { 0%{opacity:1; transform:scale(1)} 50%{opacity:.5; transform:scale(1.5)} 100%{opacity:1; transform:scale(1)} }
 @keyframes pulse { to { opacity:.5 } }
 
-/* Saved feedback */
 .saved-ack {
     display: inline-flex;
     align-items: center;
@@ -224,7 +214,6 @@ tfoot td { background:var(--surface-0); font-size:12px; font-weight:600; padding
             el.textContent = total > 0 ? total + '%' : '—';
             el.className = `row-total ${total > 0 ? 'has-value' : ''} ${total > 100 ? 'over-limit' : ''}`;
         }
-        // Highlight row inputs if over limit
         document.querySelectorAll(`.weight-input[data-clo="${cloId}"]`).forEach(inp => {
             if (total > 100) {
                 inp.classList.add('row-over');
@@ -364,7 +353,6 @@ tfoot td { background:var(--surface-0); font-size:12px; font-weight:600; padding
             rows.push(cells);
         });
 
-        // PLO totals row
         const ploTotalRow = ['PLO Total'];
         document.querySelectorAll('.col-total').forEach(el => {
             ploTotalRow.push(el.textContent?.replace('%', '') || '0');
@@ -372,7 +360,6 @@ tfoot td { background:var(--surface-0); font-size:12px; font-weight:600; padding
         ploTotalRow.push('');
         rows.push(ploTotalRow);
 
-        // Build CSV string
         const date = new Date().toISOString().slice(0, 10);
         const filename = `matrix_${courseCode}_${date}.csv`;
         const csvContent = rows.map(r => r.map(cell => {

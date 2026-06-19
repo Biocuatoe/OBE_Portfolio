@@ -8,7 +8,7 @@
         <p class="page-sub">Thống kê tỷ lệ đạt chuẩn đầu ra chương trình đào tạo</p>
     </div>
     <div class="header-actions">
-        <select id="programSelect" class="form-select" title="Chọn chương trình đào tạo">
+        <select id="programSelect" class="form-control" style="min-width:220px" title="Chọn chương trình đào tạo">
             <?php if (!empty($programs)): ?>
                 <?php foreach ($programs as $p): ?>
                     <option value="<?= $p['id'] ?>" <?= ($p['id'] == $selected_program_id) ? 'selected' : '' ?>>
@@ -19,7 +19,7 @@
                 <option value="">— Chưa có chương trình —</option>
             <?php endif; ?>
         </select>
-        <button class="btn btn-outline" id="printBtn" title="In báo cáo">
+        <button class="btn btn-secondary btn-sm" id="printBtn" title="In báo cáo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                 <polyline points="6 9 6 2 18 2 18 9"/>
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
@@ -32,7 +32,7 @@
 
 <?php if (empty($programs)): ?>
     <!-- Empty: No programs -->
-    <div class="section-card">
+    <div class="card">
         <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
                 <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
@@ -43,7 +43,7 @@
         </div>
     </div>
 <?php elseif ($selected_program_id == 0): ?>
-    <div class="section-card">
+    <div class="card">
         <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
                 <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
@@ -55,11 +55,11 @@
 <?php else: ?>
 
     <!-- ── PLO Attainment Bar Chart ─────────────────────────────────── -->
-    <div class="section-card" id="ploChartSection">
-        <div class="section-header">
+    <div class="card" id="ploChartSection">
+        <div class="card-header">
             <div class="section-title-group">
-                <h3 class="section-title">Biểu đồ đạt chuẩn PLO</h3>
-                <span class="section-badge"><?= count($plo_report) ?> PLO</span>
+                <h3 class="card-title">Biểu đồ đạt chuẩn PLO</h3>
+                <span class="badge badge-gray"><?= count($plo_report) ?> PLO</span>
             </div>
             <div class="chart-legend">
                 <div class="legend-item">
@@ -87,16 +87,16 @@
                     <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
                 </svg>
                 <p>Chưa có PLO nào hoặc chưa có dữ liệu đạt chuẩn.</p>
-                <a href="/admin/plos/<?= $selected_program_id ?>" class="btn btn-outline btn-sm mt-8">Quản lý PLO</a>
+                <a href="/admin/plos/<?= $selected_program_id ?>" class="btn btn-secondary btn-sm mt-8">Quản lý PLO</a>
             </div>
         <?php else: ?>
             <div class="bar-chart-container">
                 <?php foreach ($plo_report as $idx => $plo):
-                    $pct     = (float)$plo['avg_attainment'];
-                    $passR   = (float)$plo['pass_rate'];
+                    $pct      = (float)(($plo['avg_attainment'] ?? 0));
+                    $passR    = (float)(($plo['pass_rate'] ?? 0));
                     $barScale = $pct / 100;
                     $barColor = $pct >= 70 ? 'good' : ($pct >= 50 ? 'mid' : 'low');
-                    $thresholdPos = 70; // 70% of bar width
+                    $thresholdPos = 70;
                 ?>
                     <div class="bar-row" data-delay="<?= $idx * 80 ?>">
                         <div class="bar-label-col">
@@ -135,11 +135,11 @@
     </div>
 
     <!-- ── PLO Detail Table ─────────────────────────────────────────── -->
-    <div class="section-card" id="ploTableSection">
-        <div class="section-header">
+    <div class="card" id="ploTableSection">
+        <div class="card-header">
             <div class="section-title-group">
-                <h3 class="section-title">Chi tiết từng PLO</h3>
-                <span class="section-badge"><?= count($plo_report) ?> PLO</span>
+                <h3 class="card-title">Chi tiết từng PLO</h3>
+                <span class="badge badge-gray"><?= count($plo_report) ?> PLO</span>
             </div>
         </div>
 
@@ -148,8 +148,8 @@
                 <p>Không có dữ liệu PLO.</p>
             </div>
         <?php else: ?>
-            <div class="table-wrapper">
-                <table class="data-table" id="ploTable">
+            <div class="table-wrap">
+                <table class="data-table striped" id="ploTable">
                     <thead>
                         <tr>
                             <th>Mã PLO</th>
@@ -164,18 +164,18 @@
                     </thead>
                     <tbody>
                         <?php foreach ($plo_report as $plo):
-                            $pct   = (float)$plo['avg_attainment'];
+                            $pct    = (float)(($plo['avg_attainment'] ?? 0));
                             $pColor = $pct >= 70 ? 'good' : ($pct >= 50 ? 'mid' : 'low');
                             $catColor = match(strtolower($plo['category'] ?? '')) {
-                                'knowledge' => 'cat--indigo',
-                                'skill'     => 'cat--sky',
-                                'attitude'  => 'cat--amber',
-                                default     => 'cat--slate',
+                                'knowledge' => 'badge badge-accent',
+                                'skill'    => 'badge badge-sky',
+                                'attitude'  => 'badge badge-amber',
+                                default    => 'badge badge-gray',
                             };
                         ?>
                             <tr>
                                 <td>
-                                    <span class="plo-badge"><?= htmlspecialchars($plo['code']) ?></span>
+                                    <span class="badge badge-accent"><?= htmlspecialchars($plo['code']) ?></span>
                                 </td>
                                 <td>
                                     <span class="cell-desc" title="<?= htmlspecialchars($plo['description']) ?>">
@@ -183,12 +183,12 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="cat-badge <?= $catColor ?>">
+                                    <span class="<?= $catColor ?>">
                                         <?= htmlspecialchars($plo['category'] ?: '—') ?>
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="stat-num"><?= $plo['measured_students'] ?></span>
+                                    <span class="text-muted"><?= $plo['measured_students'] ?></span>
                                 </td>
                                 <td class="text-center">
                                     <?php if ($plo['measured_students'] > 0): ?>
@@ -200,7 +200,7 @@
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center">
-                                    <span class="stat-num"><?= $plo['students_passed'] ?></span>
+                                    <span class="text-muted"><?= $plo['students_passed'] ?></span>
                                 </td>
                                 <td class="text-center">
                                     <?php if ($plo['measured_students'] > 0): ?>
@@ -238,11 +238,11 @@
     </div>
 
     <!-- ── Top 10 Students ─────────────────────────────────────────── -->
-    <div class="section-card" id="topStudentsSection">
-        <div class="section-header">
+    <div class="card" id="topStudentsSection">
+        <div class="card-header">
             <div class="section-title-group">
-                <h3 class="section-title">Top 10 sinh viên xuất sắc</h3>
-                <span class="section-badge section-badge--emerald">
+                <h3 class="card-title">Top 10 sinh viên xuất sắc</h3>
+                <span class="badge badge-emerald">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
@@ -275,12 +275,12 @@
                         </thead>
                         <tbody>
                             <?php foreach ($top_students as $i => $s):
-                                $rank = $i + 1;
+                                $rank      = $i + 1;
                                 $rankClass = $rank === 1 ? 'rank--gold' : ($rank === 2 ? 'rank--silver' : ($rank === 3 ? 'rank--bronze' : 'rank--gray'));
                                 $rankIcon  = $rank === 1 ? '🥇' : ($rank === 2 ? '🥈' : ($rank === 3 ? '🥉' : ''));
-                                $pct = (float)($s['overall_pct'] ?? 0);
-                                $barWidth = min(100, $pct);
-                                $pColor = $pct >= 70 ? 'good' : ($pct >= 50 ? 'mid' : 'low');
+                                $pct       = (float)(($s['overall_pct'] ?? 0));
+                                $barWidth  = min(100, $pct);
+                                $pColor    = $pct >= 70 ? 'good' : ($pct >= 50 ? 'mid' : 'low');
                             ?>
                                 <tr class="student-rank-row">
                                     <td class="text-center col-rank">
@@ -297,7 +297,7 @@
                                             </div>
                                             <div>
                                                 <div class="student-full-name"><?= htmlspecialchars($s['full_name'] ?? $s['username']) ?></div>
-                                                <div class="student-username">@<?= htmlspecialchars($s['username']) ?></div>
+                                                <div class="student-username text-muted">@<?= htmlspecialchars($s['username']) ?></div>
                                             </div>
                                         </div>
                                     </td>
@@ -307,13 +307,13 @@
                                                 <div class="student-bar-fill student-fill--<?= $pColor ?>"
                                                      style="width:<?= $barWidth ?>%"></div>
                                             </div>
-                                            <span class="student-pct-label score--<?= $pColor ?>">
+                                            <span class="score-display score--<?= $pColor ?>">
                                                 <?= number_format($pct, 1) ?>%
                                             </span>
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <span class="plos-count-badge">
+                                        <span class="badge badge-gray">
                                             <?= (int)($s['plos_measured'] ?? 0) ?> PLO
                                         </span>
                                     </td>
@@ -325,18 +325,18 @@
 
                 <!-- Right: Mini bar chart of top 5 -->
                 <?php
-                $top5 = array_slice($top_students, 0, 5);
+                $top5   = array_slice($top_students, 0, 5);
                 $maxPct = max(array_column($top5, 'overall_pct'), 100);
                 ?>
                 <?php if (!empty($top5)): ?>
                     <div class="top5-chart-wrap">
                         <h4 class="top5-chart-title">Top 5 — Biểu đồ so sánh</h4>
                         <?php foreach ($top5 as $i => $s):
-                            $pct = (float)($s['overall_pct'] ?? 0);
-                            $barWidth = $maxPct > 0 ? ($pct / $maxPct) * 100 : 0;
-                            $pColor = $pct >= 70 ? 'good' : ($pct >= 50 ? 'mid' : 'low');
-                            $name = $s['full_name'] ?? $s['username'];
-                            $shortName = mb_strlen($name) > 18 ? mb_substr($name, 0, 16) . '…' : $name;
+                            $pct       = (float)(($s['overall_pct'] ?? 0));
+                            $barWidth   = $maxPct > 0 ? ($pct / $maxPct) * 100 : 0;
+                            $pColor     = $pct >= 70 ? 'good' : ($pct >= 50 ? 'mid' : 'low');
+                            $name       = $s['full_name'] ?? $s['username'];
+                            $shortName  = mb_strlen($name) > 18 ? mb_substr($name, 0, 16) . '…' : $name;
                         ?>
                             <div class="top5-bar-item">
                                 <div class="top5-bar-label">
@@ -347,7 +347,7 @@
                                     <div class="top5-bar-fill top5-fill--<?= $pColor ?>"
                                          style="width:<?= $barWidth ?>%"></div>
                                 </div>
-                                <span class="top5-pct-label score--<?= $pColor ?>">
+                                <span class="score-display score--<?= $pColor ?>" style="font-size:11px;min-width:44px;text-align:right">
                                     <?= number_format($pct, 1) ?>%
                                 </span>
                             </div>
@@ -426,96 +426,7 @@
     gap: 10px;
     flex-wrap: wrap;
 }
-
-/* Form select */
-.form-select {
-    background: var(--surface-1);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    padding: 9px 14px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    outline: none;
-    cursor: pointer;
-    transition: border-color var(--transition), box-shadow var(--transition);
-    min-width: 220px;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 14px;
-    padding-right: 32px;
-}
-.form-select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.form-select option { background: var(--surface-1); color: var(--text-primary); }
-
-/* Buttons */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 9px 18px;
-    border-radius: var(--radius-sm);
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    text-decoration: none;
-    transition: all var(--transition);
-    white-space: nowrap;
-}
-.btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
-.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-.btn-outline {
-    background: var(--surface-1);
-    border-color: var(--surface-2);
-    color: var(--text-secondary);
-}
-.btn-outline:hover { border-color: var(--accent); color: var(--text-primary); }
-.btn-sm { font-size: 12px; padding: 6px 14px; }
 .mt-8 { margin-top: 8px; }
-
-/* ── Section Card ─────────────────────────────────────────────── */
-.section-card {
-    background: var(--surface-1);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-}
-.section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-.section-title-group { display: flex; align-items: center; gap: 10px; }
-.section-title {
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--text-primary);
-}
-.section-badge {
-    font-size: 11px;
-    padding: 2px 10px;
-    background: var(--surface-2);
-    border-radius: 20px;
-    color: var(--text-secondary);
-    font-weight: 600;
-}
-.section-badge--emerald {
-    background: rgba(16,185,129,.15);
-    color: var(--emerald);
-}
 
 /* Chart legend */
 .chart-legend {
@@ -639,43 +550,8 @@
     align-items: center;
     gap: 4px;
 }
-.text-emerald { color: var(--emerald); }
-.text-amber   { color: var(--amber); }
-.text-rose    { color: var(--rose); }
 
 /* ── PLO Detail Table ──────────────────────────────────────────── */
-.table-wrapper { overflow-x: auto; }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th {
-    text-align: left;
-    padding: 10px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--surface-2);
-    white-space: nowrap;
-}
-.data-table td {
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(51,65,85,.4);
-    vertical-align: middle;
-    font-size: 13px;
-}
-.data-table tbody tr:hover td { background: rgba(51,65,85,.25); }
-.data-table tbody tr:last-child td { border-bottom: none; }
-
-.plo-badge {
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 700;
-    font-size: 12px;
-    color: var(--accent);
-    background: var(--accent-soft);
-    padding: 2px 8px;
-    border-radius: 4px;
-    white-space: nowrap;
-}
 .cell-desc {
     display: block;
     max-width: 240px;
@@ -684,28 +560,6 @@
     white-space: nowrap;
     color: var(--text-secondary);
     font-size: 12px;
-}
-
-.cat-badge {
-    display: inline-flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 9px;
-    border-radius: 20px;
-    text-transform: capitalize;
-    white-space: nowrap;
-}
-.cat--indigo { background: rgba(99,102,241,.15); color: #a5b4fc; }
-.cat--sky    { background: rgba(14,165,233,.15);  color: #7dd3fc; }
-.cat--amber  { background: rgba(245,158,11,.15);  color: #fcd34d; }
-.cat--slate  { background: var(--surface-2);      color: var(--text-secondary); }
-
-.stat-num {
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    color: var(--text-primary);
 }
 
 .score-display { font-weight: 700; font-size: 13px; }
@@ -809,7 +663,7 @@
     flex-shrink: 0;
 }
 .student-full-name { font-weight: 600; font-size: 13px; color: var(--text-primary); }
-.student-username  { font-size: 11px; color: var(--text-muted); }
+.student-username  { font-size: 11px; }
 
 .student-pct-cell {
     display: flex;
@@ -832,23 +686,6 @@
 .student-fill--good { background: linear-gradient(90deg, #10b981, #34d399); }
 .student-fill--mid  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 .student-fill--low  { background: linear-gradient(90deg, #f43f5e, #fb7185); }
-.student-pct-label {
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 700;
-    font-size: 12px;
-    min-width: 42px;
-    text-align: right;
-}
-
-.plos-count-badge {
-    font-family: 'Lexend Deca', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 8px;
-    background: var(--surface-2);
-    color: var(--text-secondary);
-    border-radius: 20px;
-}
 
 /* Top 5 chart */
 .top5-chart-wrap {
@@ -914,26 +751,11 @@
 .top5-fill--good { background: linear-gradient(90deg, #10b981, #34d399); }
 .top5-fill--mid  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 .top5-fill--low  { background: linear-gradient(90deg, #f43f5e, #fb7185); }
-.top5-pct-label {
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 700;
-    font-size: 11px;
-    text-align: right;
-}
-
-/* ── Empty state ───────────────────────────────────────────────── */
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-}
-.empty-state svg { margin-bottom: 12px; opacity: .4; }
-.empty-state p { font-size: 13px; }
 
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 640px) {
     .page-header { flex-direction: column; align-items: stretch; }
     .header-actions { flex-direction: column; width: 100%; }
-    .form-select, .btn { width: 100%; }
+    .form-control, .btn { width: 100%; }
 }
 </style>
