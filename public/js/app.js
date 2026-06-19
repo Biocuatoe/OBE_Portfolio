@@ -162,6 +162,69 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     });
 });
 
+// ── Admin AJAX API helper ──────────────────────────────────────────
+// Reusable CRUD helpers for admin pages.
+window.AdminAPI = {
+    /** Generic fetch wrapper that auto-injects CSRF and throws on non-2xx. */
+    send(url, method, body = {}) {
+        const token = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+        return fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ ...body, _token: token }),
+        }).then(r => r.json()).then(d => {
+            if (!r.ok) throw d;
+            return d;
+        });
+    },
+
+    /** Submit a form: gather field values from a <form> element. */
+    submitForm(url, method, formEl) {
+        const body = {};
+        new FormData(formEl).forEach((v, k) => { body[k] = v; });
+        return this.send(url, method, body);
+    },
+
+    /** Toggle loading state on a submit button. */
+    setLoading(btn, on, labelMap = {}) {
+        if (!btn) return;
+        btn.disabled = on;
+        const spinner = btn.querySelector('.btn-spinner');
+        if (spinner) spinner.hidden = !on;
+        const label = btn.querySelector('.btn-label') || btn;
+        if (on && labelMap.loading) {
+            label.textContent = labelMap.loading;
+        } else if (!on && labelMap.done) {
+            label.textContent = labelMap.done;
+        }
+    },
+
+    /** Apply field-level errors from API response onto form elements. */
+    applyFieldErrors(formEl, fields) {
+        Object.entries(fields).forEach(([key, msg]) => {
+            // Try both id-based and name-based lookups
+            const input = formEl.querySelector(`#${key}`) || formEl.querySelector(`[name="${key}"]`);
+            const errorEl = formEl.querySelector(`#err-${key}`);
+            if (input)  input.classList.toggle('input--error', !!msg);
+            if (errorEl) { errorEl.textContent = msg; errorEl.style.display = msg ? 'block' : 'none'; }
+        });
+    },
+
+    /** Clear all field errors from a form. */
+    clearErrors(formEl) {
+        formEl.querySelectorAll('.input--error').forEach(el => el.classList.remove('input--error'));
+        formEl.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
+    },
+};
+
+// ── Activity log filter (Admin Dashboard) ─────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
 // ── Expose globals ───────────────────────────────────────────────
 window.Toast        = Toast;
 window.getCsrfToken = getCsrfToken;
