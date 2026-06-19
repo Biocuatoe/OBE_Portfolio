@@ -66,12 +66,28 @@
         <table class="data-table striped" id="usersTable">
             <thead>
                 <tr>
-                    <th>Người dùng</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Vai trò</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày tạo</th>
+                    <?php
+                    function th_sort(string $label, string $col, string $currentCol, string $currentDir, array $extraQs = []): string {
+                        $isActive = $col === $currentCol;
+                        $newDir   = $isActive && $currentDir === 'ASC' ? 'DESC' : 'ASC';
+                        $icon     = '';
+                        if ($isActive) {
+                            $arrow = $currentDir === 'ASC'
+                                ? '&#9650;'
+                                : '&#9660;';
+                            $icon = ' <span style="opacity:.6;font-size:10px">'.$arrow.'</span>';
+                        }
+                        $qs = array_merge(['sort' => $col, 'dir' => $newDir], $extraQs);
+                        $href = '/admin/users?' . http_build_query($qs);
+                        return '<a href="'.$href.'" class="th-sort'.($isActive ? ' th-sort--active' : '').'" title="Sắp xếp '.$label.'">'.$label.$icon.'</a>';
+                    }
+                    ?>
+                    <th><?= th_sort('Người dùng', 'full_name', $sort_col ?? 'full_name', $sort_dir ?? 'ASC', ['role' => $filter_role, 'search' => $search_query]) ?></th>
+                    <th><?= th_sort('Username', 'username', $sort_col ?? 'full_name', $sort_dir ?? 'ASC', ['role' => $filter_role, 'search' => $search_query]) ?></th>
+                    <th><?= th_sort('Email', 'email', $sort_col ?? 'full_name', $sort_dir ?? 'ASC', ['role' => $filter_role, 'search' => $search_query]) ?></th>
+                    <th><?= th_sort('Vai trò', 'role', $sort_col ?? 'full_name', $sort_dir ?? 'ASC', ['role' => $filter_role, 'search' => $search_query]) ?></th>
+                    <th><?= th_sort('Trạng thái', 'is_active', $sort_col ?? 'full_name', $sort_dir ?? 'ASC', ['role' => $filter_role, 'search' => $search_query]) ?></th>
+                    <th><?= th_sort('Ngày tạo', 'created_at', $sort_col ?? 'full_name', $sort_dir ?? 'ASC', ['role' => $filter_role, 'search' => $search_query]) ?></th>
                     <th class="text-right">Thao tác</th>
                 </tr>
             </thead>
@@ -610,6 +626,23 @@
 .text-right  { text-align: right; }
 .text-muted  { color: var(--text-muted); }
 .text-sm     { font-size: 12px; }
+
+/* Sortable table headers */
+.th-sort {
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: color var(--transition-fast);
+}
+.th-sort:hover { color: var(--text-primary); }
+.th-sort--active { color: var(--accent); }
 
 /* Confirm modal extras */
 .confirm-icon {

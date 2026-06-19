@@ -76,6 +76,64 @@ class AdminController extends BaseController
     }
 
     // ── Programs ─────────────────────────────────────────────────────
+    public function programs(array $params): void
+    {
+        $this->requireAuth('admin');
+
+        $search   = trim($_GET['search'] ?? '');
+        $page     = max(1, (int)($_GET['page'] ?? 1));
+        $sortCol  = $_GET['sort'] ?? 'code';
+        $sortDir  = strtoupper($_GET['dir'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+        $perPage  = 20;
+        $offset   = ($page - 1) * $perPage;
+
+        $validSorts = ['code','name','created_at','course_count','plo_count','assignment_count','student_count'];
+        if (!in_array($sortCol, $validSorts, true)) $sortCol = 'code';
+
+        $where = [];
+        $args  = [];
+
+        if ($search !== '') {
+            $where[] = "(p.code LIKE ? OR p.name LIKE ?)";
+            $args[]  = "%{$search}%";
+            $args[]  = "%{$search}%";
+        }
+
+        $whereClause = $where ? "WHERE " . implode(" AND ", $where) : "WHERE 1=1";
+
+        $total = (int)$this->db->fetchOne(
+            "SELECT COUNT(*) as c FROM programs p {$whereClause}",
+            $args
+        )['c'];
+        $totalPages = $total > 0 ? (int)ceil($total / $perPage) : 1;
+
+        $programs = $this->db->fetchAll(
+            "SELECT p.*,
+                (SELECT COUNT(*) FROM courses c WHERE c.program_id = p.id) AS course_count,
+                (SELECT COUNT(*) FROM plos pl WHERE pl.program_id = p.id) AS plo_count,
+                (SELECT COUNT(DISTINCT ca.lecturer_id) FROM course_assignments ca JOIN courses c ON c.id = ca.course_id WHERE c.program_id = p.id) AS assignment_count,
+                (SELECT COUNT(DISTINCT e.student_id) FROM enrollments e JOIN course_assignments ca ON ca.id = e.assignment_id JOIN courses c ON c.id = ca.course_id WHERE c.program_id = p.id) AS student_count,
+                COALESCE(a.full_name, '—') AS admin_name
+             FROM programs p
+             LEFT JOIN users a ON a.id = p.admin_id
+             {$whereClause}
+             ORDER BY {$sortCol} {$sortDir}
+             LIMIT {$perPage} OFFSET {$offset}",
+            $args
+        );
+
+        $this->view('admin/programs', [
+            'pageTitle'    => 'Chương trình đào tạo',
+            'programs'     => $programs,
+            'search_query' => $search,
+            'csrf_token'   => $this->csrfToken(),
+            'total_pages'  => $totalPages,
+            'current_page' => $page,
+            'sort_col'     => $sortCol,
+            'sort_dir'     => $sortDir,
+        ]);
+    }
+
     public function storeProgram(array $params): void
     {
         $this->requireAuth('admin');
@@ -654,12 +712,17 @@ class AdminController extends BaseController
 
         $totalPages = $total > 0 ? (int)ceil($total / $perPage) : 1;
 
+        $sortCol  = $_GET['sort'] ?? 'full_name';
+        $sortDir  = strtoupper($_GET['dir'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+        $validSorts = ['username','email','full_name','role','is_active','created_at'];
+        if (!in_array($sortCol, $validSorts, true)) $sortCol = 'full_name';
+
         // Paginated results
         $users = $this->db->fetchAll(
             "SELECT id, username, email, full_name, role, is_active, created_at
              FROM users u
              {$whereClause}
-             ORDER BY FIELD(u.role,'admin','lecturer','student'), u.full_name
+             ORDER BY {$sortCol} {$sortDir}
              LIMIT {$perPage} OFFSET {$offset}",
             $args
         );
@@ -682,6 +745,8 @@ class AdminController extends BaseController
             'total_pages'  => $totalPages,
             'current_page' => $page,
             'role_counts'  => $roleCountsMap,
+            'sort_col'     => $sortCol,
+            'sort_dir'     => $sortDir,
         ]);
     }
 
