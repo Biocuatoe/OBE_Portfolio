@@ -22,6 +22,29 @@ class AdminController extends BaseController
             'clos'      => $this->db->fetchOne("SELECT COUNT(*) as c FROM clos")['c'],
         ];
 
+        // Bar chart: sinh viên theo chương trình đào tạo
+        $programStudentData = $this->db->fetchAll(
+            "SELECT p.name AS program_name, p.code AS program_code,
+                COUNT(DISTINCT CASE WHEN u.role='student' THEN u.id END) AS student_count
+             FROM programs p
+             LEFT JOIN courses c ON c.program_id = p.id
+             LEFT JOIN course_assignments ca ON ca.course_id = c.id
+             LEFT JOIN enrollments e ON e.assignment_id = ca.id
+             LEFT JOIN users u ON u.id = e.student_id
+             GROUP BY p.id
+             ORDER BY p.code"
+        );
+
+        // Doughnut: tỷ lệ đạt / không đạt PLO (threshold 70%)
+        $ploAttainmentData = $this->db->fetchAll(
+            "SELECT
+                COUNT(DISTINCT CASE WHEN pa.achieved_percentage >= 70 THEN pa.student_id END) AS pass_count,
+                COUNT(DISTINCT CASE WHEN pa.achieved_percentage < 70  THEN pa.student_id END) AS fail_count
+             FROM plos p
+             LEFT JOIN plo_attainments pa ON pa.plo_id = p.id
+             WHERE pa.student_id IS NOT NULL"
+        );
+
         // Attainment tổng hợp theo PLO
         $ploStats = $this->db->fetchAll(
             "SELECT p.code, p.description,
@@ -35,18 +58,20 @@ class AdminController extends BaseController
 
         // Recent activity
         $recentLogs = $this->db->fetchAll(
-            "SELECT al.action, al.created_at, u.full_name, u.role
+            "SELECT al.action, al.created_at, u.full_name, u.role, al.entity
              FROM activity_logs al
              JOIN users u ON u.id = al.user_id
              ORDER BY al.created_at DESC
-             LIMIT 20"
+             LIMIT 30"
         );
 
         $this->view('admin/dashboard', [
-            'pageTitle'   => 'Bảng điều khiển Admin',
-            'stats'       => $stats,
-            'plo_stats'   => $ploStats,
-            'recent_logs' => $recentLogs,
+            'pageTitle'             => 'Bảng điều khiển Admin',
+            'stats'                 => $stats,
+            'plo_stats'             => $ploStats,
+            'recent_logs'           => $recentLogs,
+            'program_student_data'  => $programStudentData,
+            'plo_attainment_data'   => $ploAttainmentData,
         ]);
     }
 
