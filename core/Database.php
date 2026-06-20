@@ -132,4 +132,23 @@ final class Database
             $this->pdo->rollBack();
         }
     }
+
+    /**
+     * Ghi log hoạt động vào bảng activity_logs
+     *
+     * @param int         $userId ID của người dùng thực hiện
+     * @param string      $action Hành động (VD: 'Create user', 'Update program')
+     * @param string|null $entity Đối tượng bị tác động (VD: 'user', 'program', null = 'System')
+     * @param string|null $ip     Địa chỉ IP, mặc định lấy từ REMOTE_ADDR
+     */
+    public function logActivity(int $userId, string $action, ?string $entity = null, ?string $ip = null): void
+    {
+        $entity = $entity ?? 'System';
+        $ip = $ip ?? ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+
+        $this->query(
+            "INSERT INTO activity_logs (user_id, action, entity, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())",
+            [$userId, $action, $entity, $ip]
+        );
+    }
 }

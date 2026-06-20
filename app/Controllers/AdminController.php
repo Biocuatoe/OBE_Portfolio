@@ -721,13 +721,248 @@ class AdminController extends BaseController
                 "INSERT INTO users (username, email, password, full_name, role) VALUES (?,?,?,?,?)",
                 array_values($data)
             );
-            $this->json(['status' => 'success', 'id' => $this->db->lastInsertId()]);
+            $newId = (int)$this->db->lastInsertId();
+            $this->db->logActivity($newId, 'Create user', 'user');
+            $this->json(['status' => 'success', 'id' => $newId]);
         } catch (\PDOException $e) {
             if (str_contains($e->getMessage(), 'Duplicate')) {
                 $this->json(['error' => 'Username hoặc email đã tồn tại.'], 409);
             }
             throw $e;
         }
+    }
+
+    public function toggleUserStatus(array $params): void
+    {
+        $this->requireAuth('admin');
+        $this->verifyCsrf();
+
+        $id   = (int)($params['id'] ?? 0);
+        $body = $this->jsonBody();
+        $action = $body['action'] ?? '';
+
+        if (!$id) {
+            $this->json(['error' => 'ID người dùng không hợp lệ.'], 422);
+        }
+
+        // Prevent self-deactivation
+        if ($id === (int)($_SESSION['user_id'] ?? 0)) {
+            $this->json(['error' => 'Bạn không thể thay đổi trạng thái tài khoản của chính mình.'], 403);
+        }
+
+        $user = $this->db->fetchOne("SELECT id, full_name FROM users WHERE id = ?", [$id]);
+        if (!$user) {
+            $this->json(['error' => 'Người dùng không tồn tại.'], 404);
+        }
+
+        if ($action === 'activate') {
+            $this->db->query("UPDATE users SET is_active = 1 WHERE id = ?", [$id]);
+            $this->db->logActivity($id, 'Activate user', 'user');
+        } elseif ($action === 'deactivate') {
+            $this->db->query("UPDATE users SET is_active = 0 WHERE id = ?", [$id]);
+            $this->db->logActivity($id, 'Deactivate user', 'user');
+        } else {
+            $this->json(['error' => 'Hành động không hợp lệ. Sử dụng: activate hoặc deactivate'], 422);
+        }
+
+        $this->json(['status' => 'success']);
+    }
+
+    public function updateUser(array $params): void
+    {
+        $this->requireAuth('admin');
+        $this->verifyCsrf();
+
+        $id   = (int)($params['id'] ?? 0);
+        $body = $this->jsonBody();
+
+        if (!$id) {
+            $this->json(['error' => 'ID người dùng không hợp lệ.'], 422);
+        }
+
+        $data = [
+            'username'  => trim($body['username'] ?? ''),
+            'email'     => trim($body['email'] ?? ''),
+            'full_name' => trim($body['full_name'] ?? ''),
+            'role'      => in_array($body['role'] ?? '', ['admin', 'lecturer', 'student']) ? $body['role'] : 'student',
+        ];
+        $password = $body['password'] ?? '';
+
+        // Validate required fields
+        $errors = [];
+        if (!$data['username']) {
+            $errors['username'] = 'Username không được để trống.';
+        }
+        if (!$data['email']) {
+            $errors['email'] = 'Email không được để trống.';
+        } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Email không hợp lệ.';
+        }
+        if (!$data['full_name']) {
+            $errors['full_name'] = 'Họ tên không được để trống.';
+        }
+        if ($password && strlen($password) < 8) {
+            $errors['password'] = 'Mật khẩu phải có ít nhất 8 ký tự.';
+        }
+
+        if (!empty($errors)) {
+            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
+        }
+
+        // Check duplicate username (exclude current id)
+        $existingUsername = $this->db->fetchOne(
+            "SELECT id FROM users WHERE username = ? AND id != ? LIMIT 1",
+            [$data['username'], $id]
+        );
+        if ($existingUsername) {
+            $this->json([
+                'error'  => 'Username đã tồn tại.',
+                'fields' => ['username' => 'Username đã tồn tại.'],
+            ], 409);
+        }
+
+        // Check duplicate email (exclude current id)
+        $existingEmail = $this->db->fetchOne(
+            "SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1",
+            [$data['email'], $id]
+        );
+        if ($existingEmail) {
+            $this->json([
+                'error'  => 'Email đã tồn tại.',
+                'fields' => ['email' => 'Email đã tồn tại.'],
+            ], 409);
+        }
+
+        // Build update query
+        if ($password) {
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+            $this->db->query(
+                "UPDATE users SET username=?, email=?, full_name=?, role=?, password=? WHERE id=?",
+                [$data['username'], $data['email'], $data['full_name'], $data['role'], $hashedPassword, $id]
+            );
+        } else {
+            $this->db->query(
+                "UPDATE users SET username=?, email=?, full_name=?, role=? WHERE id=?",
+                [$data['username'], $data['email'], $data['full_name'], $data['role'], $id]
+            );
+        }
+
+        $this->db->logActivity($id, 'Update user', 'user');
+        $this->json(['status' => 'success']);
+    }
+
+    public function activityLogs(array $params): void
+    {
+        $this->requireAuth('admin');
+
+        $filterRole   = $_GET['role'] ?? '';
+        $filterAction = $_GET['action'] ?? '';
+        $filterFrom   = $_GET['from'] ?? date('Y-m-d', strtotime('-30 days'));
+        $filterTo     = $_GET['to'] ?? date('Y-m-d');
+        $page         = max(1, (int)($_GET['page'] ?? 1));
+        $perPage      = 20;
+        $offset       = ($page - 1) * $perPage;
+
+        // Build WHERE conditions
+        $where = ['1=1'];
+        $args  = [];
+
+        if ($filterRole) {
+            $where[] = 'u.role = ?';
+            $args[] = $filterRole;
+        }
+        if ($filterAction) {
+            $where[] = 'al.action LIKE ?';
+            $args[] = '%' . $filterAction . '%';
+        }
+        if ($filterFrom) {
+            $where[] = 'DATE(al.created_at) >= ?';
+            $args[] = $filterFrom;
+        }
+        if ($filterTo) {
+            $where[] = 'DATE(al.created_at) <= ?';
+            $args[] = $filterTo;
+        }
+
+        $whereClause = implode(' AND ', $where);
+
+        // Get logs with pagination
+        $logs = $this->db->fetchAll(
+            "SELECT al.*, u.full_name, u.username, u.role as user_role
+             FROM activity_logs al
+             JOIN users u ON u.id = al.user_id
+             WHERE {$whereClause}
+             ORDER BY al.created_at DESC
+             LIMIT {$perPage} OFFSET {$offset}",
+            $args
+        );
+
+        // Count total for pagination
+        $totalCount = $this->db->fetchOne(
+            "SELECT COUNT(*) as c
+             FROM activity_logs al
+             JOIN users u ON u.id = al.user_id
+             WHERE {$whereClause}",
+            $args
+        )['c'];
+
+        $totalPages = max(1, (int)ceil($totalCount / $perPage));
+
+        // Get distinct action types for filter dropdown
+        $actionTypes = $this->db->fetchAll(
+            "SELECT DISTINCT action FROM activity_logs ORDER BY action"
+        );
+
+        // Quick stats
+        $statsTotal = $this->db->fetchOne("SELECT COUNT(*) as c FROM activity_logs")['c'];
+        $statsToday = $this->db->fetchOne(
+            "SELECT COUNT(*) as c FROM activity_logs WHERE DATE(created_at) = CURDATE()"
+        )['c'];
+        $stats7Days = $this->db->fetchOne(
+            "SELECT COUNT(*) as c FROM activity_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        )['c'];
+
+        $this->view('admin/activity_logs', [
+            'pageTitle'     => 'Nhật ký hoạt động',
+            'logs'          => $logs,
+            'pagination'    => [
+                'page'      => $page,
+                'per_page'  => $perPage,
+                'total'     => $totalCount,
+                'pages'     => $totalPages,
+                'has_next'  => $page < $totalPages,
+                'has_prev'  => $page > 1,
+            ],
+            'action_types'   => $actionTypes,
+            'filter_role'    => $filterRole,
+            'filter_action'  => $filterAction,
+            'filter_from'    => $filterFrom,
+            'filter_to'      => $filterTo,
+            'stats_total'    => $statsTotal,
+            'stats_today'    => $statsToday,
+            'stats_7days'    => $stats7Days,
+            'csrf_token'     => $this->csrfToken(),
+        ]);
+    }
+
+    public function deleteActivityLog(array $params): void
+    {
+        $this->requireAuth('admin');
+        $this->verifyCsrf();
+
+        $id = (int)($params['id'] ?? 0);
+
+        if (!$id) {
+            $this->json(['error' => 'ID không hợp lệ.'], 422);
+        }
+
+        $log = $this->db->fetchOne("SELECT id FROM activity_logs WHERE id = ?", [$id]);
+        if (!$log) {
+            $this->json(['error' => 'Bản ghi không tồn tại.'], 404);
+        }
+
+        $this->db->query("DELETE FROM activity_logs WHERE id = ?", [$id]);
+        $this->json(['status' => 'success']);
     }
 
     // ── Report: Program Attainment Overview ──────────────────────────
