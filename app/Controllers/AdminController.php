@@ -289,16 +289,93 @@ class AdminController extends BaseController
             'category'    => trim($body['category'] ?? ''),
         ];
 
-        if (!$data['program_id'] || !$data['code'] || !$data['description']) {
-            $this->json(['error' => 'Thiếu thông tin bắt buộc.'], 422);
+        // Validate required fields
+        $errors = [];
+        if (!$data['program_id']) {
+            $errors['program_id'] = 'Vui lòng chọn chương trình đào tạo.';
+        }
+        if ($data['code'] === '') {
+            $errors['code'] = 'Mã PLO không được để trống.';
+        } elseif (!preg_match('/^[A-Z0-9\-]{2,20}$/', $data['code'])) {
+            $errors['code'] = 'Mã PLO gồm chữ hoa, số, gạch ngang (2-20 ký tự).';
+        }
+        if ($data['description'] === '') {
+            $errors['description'] = 'Mô tả không được để trống.';
+        }
+
+        if (!empty($errors)) {
+            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
+        }
+
+        // Check duplicate code within the same program
+        $existing = $this->db->fetchOne(
+            "SELECT id FROM plos WHERE program_id = ? AND code = ? LIMIT 1",
+            [$data['program_id'], $data['code']]
+        );
+        if ($existing) {
+            $this->json([
+                'error'  => 'Mã PLO đã tồn tại trong chương trình này.',
+                'fields' => ['code' => 'Mã PLO đã tồn tại trong chương trình này.'],
+            ], 409);
         }
 
         $this->db->query(
             "INSERT INTO plos (program_id, code, description, category) VALUES (?,?,?,?)",
             array_values($data)
         );
-
         $this->json(['status' => 'success', 'id' => $this->db->lastInsertId()]);
+    }
+
+    public function updatePlo(array $params): void
+    {
+        $this->requireAuth('admin');
+        $this->verifyCsrf();
+
+        $id   = (int)($params['id'] ?? 0);
+        $body = $this->jsonBody();
+
+        $data = [
+            'program_id'  => (int)($body['program_id'] ?? 0),
+            'code'        => trim($body['code'] ?? ''),
+            'description' => trim($body['description'] ?? ''),
+            'category'    => trim($body['category'] ?? ''),
+        ];
+
+        // Validate required fields
+        $errors = [];
+        if (!$data['program_id']) {
+            $errors['program_id'] = 'Vui lòng chọn chương trình đào tạo.';
+        }
+        if ($data['code'] === '') {
+            $errors['code'] = 'Mã PLO không được để trống.';
+        } elseif (!preg_match('/^[A-Z0-9\-]{2,20}$/', $data['code'])) {
+            $errors['code'] = 'Mã PLO gồm chữ hoa, số, gạch ngang (2-20 ký tự).';
+        }
+        if ($data['description'] === '') {
+            $errors['description'] = 'Mô tả không được để trống.';
+        }
+
+        if (!empty($errors)) {
+            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
+        }
+
+        // Check duplicate code (excluding current record)
+        $existing = $this->db->fetchOne(
+            "SELECT id FROM plos WHERE program_id = ? AND code = ? AND id != ? LIMIT 1",
+            [$data['program_id'], $data['code'], $id]
+        );
+        if ($existing) {
+            $this->json([
+                'error'  => 'Mã PLO đã tồn tại trong chương trình này.',
+                'fields' => ['code' => 'Mã PLO đã tồn tại trong chương trình này.'],
+            ], 409);
+        }
+
+        $this->db->query(
+            "UPDATE plos SET program_id=?, code=?, description=?, category=? WHERE id=?",
+            [$data['program_id'], $data['code'], $data['description'], $data['category'], $id]
+        );
+        $this->json(['status' => 'success']);
     }
 
     public function deletePlo(array $params): void
