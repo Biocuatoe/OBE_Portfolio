@@ -163,16 +163,3 @@ Sử dụng **Database Transaction** để đảm bảo tính nhất quán khi c
 | `activity_logs` | Audit trail |
 
 ---
-
-## 🗣️ Gợi ý bảo vệ đồ án (Viva Pitching)
-
-**Điểm 1 — Độ phức tạp nghiệp vụ:**
-> "Hệ thống không chỉ là CRUD thông thường. Chúng em triển khai thuật toán Data Aggregation 2 tầng: từ điểm rubric → CLO attainment → PLO attainment, sử dụng Weighted Average với ma trận ánh xạ linh hoạt do giảng viên định nghĩa."
-
-**Điểm 2 — Trải nghiệm người dùng:**
-> "Live Grading hoạt động như Google Sheets: nhập điểm, debounce 600ms, gửi Fetch API, phản hồi trực quan qua màu sắc. Giảng viên điều hướng bằng Arrow Keys, lưu hàng loạt bằng Ctrl+S."
-
-**Điểm 3 — Kiến trúc phần mềm:**
-> "MVC tự xây dựng với Router hỗ trợ named params và middleware. PDO Singleton đảm bảo single connection. Transaction bảo vệ tính nhất quán khi tính attainment. CSRF token trên mọi mutation request."
-
----
