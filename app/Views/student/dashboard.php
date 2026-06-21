@@ -70,7 +70,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
         </div>
     </div>
 
-    <!-- PLO Bar Chart -->
+    <!-- PLO Performance Bar Chart -->
     <div class="chart-card chart-card--bar">
         <div class="chart-header">
             <div>
