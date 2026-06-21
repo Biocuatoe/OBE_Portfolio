@@ -2,7 +2,7 @@
 $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
 ?>
 
-<!-- Stats Overview -->
+<!-- Student Statistics Overview -->
 <div class="stats-grid">
     <div class="stat-card stat-card--primary">
         <div class="stat-icon">
