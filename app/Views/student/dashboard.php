@@ -53,7 +53,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
 
 <!-- Main Dashboard Charts Section -->
 <div class="charts-row">
-    <!-- PLO Radar Chart -->
+    <!-- Program Learning Outcomes Radar Chart -->
     <div class="chart-card chart-card--radar">
         <div class="chart-header">
             <div>
