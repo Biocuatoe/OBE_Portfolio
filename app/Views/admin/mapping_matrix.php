@@ -1,20 +1,40 @@
 <?php /* app/Views/admin/mapping_matrix.php */ ?>
 
-<div class="section-card">
-    <div class="section-header">
+<div class="card">
+    <div class="card-header">
         <div class="section-title-group">
             <span class="course-badge"><?= htmlspecialchars($course['code']) ?></span>
             <h3 class="section-title">Ma trận ánh xạ CLO → PLO</h3>
         </div>
-        <div class="matrix-legend">
-            <span class="legend-dot" style="background:var(--accent)"></span><span class="legend-text">Có ánh xạ (nhập 0-100%)</span>
-            <span class="legend-dot" style="background:var(--surface-2)"></span><span class="legend-text">Không ánh xạ (để trống)</span>
+        <div class="header-right">
+            <div class="matrix-legend">
+                <span class="legend-dot" style="background:var(--accent)"></span><span class="legend-text">Có ánh xạ (nhập 0-100%)</span>
+                <span class="legend-dot" style="background:var(--surface-2)"></span><span class="legend-text">Không ánh xạ (để trống)</span>
+            </div>
+            <button id="exportCsv" class="btn btn-secondary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Xuất CSV
+            </button>
         </div>
     </div>
 
     <p class="matrix-help">Nhập trọng số % đóng góp của từng CLO vào mỗi PLO. Để trống hoặc nhập 0 để xóa ánh xạ. Thay đổi được lưu tự động.</p>
 
-    <div class="matrix-scroll">
+    <!-- Weight warning banners -->
+    <div class="matrix-warnings" id="matrixWarnings">
+        <div class="warning-banner" id="warningRowSum" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Tổng trọng số theo CLO vượt quá 100% — kiểm tra các dòng được đánh dấu đỏ.</span>
+        </div>
+        <div class="warning-banner" id="warningColSum" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Tổng theo PLO vượt 100% — kiểm tra các cột được đánh dấu đỏ.</span>
+        </div>
+    </div>
+
+    <div class="table-wrap">
         <table class="mapping-table">
             <thead>
                 <tr>
@@ -95,9 +115,23 @@
 <meta name="csrf-token" content="<?= htmlspecialchars($csrf_token) ?>">
 
 <style>
-.matrix-help { font-size:12px; color:var(--text-muted); margin-bottom:16px; }
-.matrix-scroll { overflow-x:auto; }
-.matrix-legend { display:flex; align-items:center; gap:10px; }
+.header-right { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.matrix-help { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
+
+/* Warning banners */
+.matrix-warnings { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+.warning-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(244,63,94,.1);
+    border: 1px solid rgba(244,63,94,.3);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: #fda4af;
+}
+.warning-banner svg { flex-shrink:0; color: var(--rose); }
 
 .mapping-table { width:100%; border-collapse:collapse; white-space:nowrap; }
 .mapping-table th,
@@ -127,12 +161,16 @@
 .weight-input.has-value { background:rgba(99,102,241,.1); border-color:rgba(99,102,241,.4); color:#a5b4fc; }
 .weight-input.saving { border-color:var(--amber); }
 .weight-input.saved  { border-color:var(--emerald); animation:flashGreen .5s; }
+.weight-input.row-over  { border-color:var(--rose); background:rgba(244,63,94,.08); color:#fda4af; }
 
 @keyframes flashGreen { 0%{background:rgba(16,185,129,.2)} 100%{background:rgba(99,102,241,.1)} }
 
 .mtd-row-total, .mtd-col-total { text-align:center; font-size:12px; }
 .row-total, .col-total { color:var(--text-muted); font-weight:500; }
 .row-total.has-value, .col-total.has-value { color:var(--text-primary); font-weight:700; font-family:'Lexend Deca',sans-serif; }
+.row-total.over-limit { color:var(--rose); font-weight:800; }
+.row-total.has-value.over-limit { background:rgba(244,63,94,.15); color:var(--rose); border-radius:4px; padding:2px 6px; }
+.col-total.over-limit { color:var(--rose); font-weight:800; }
 
 tfoot td { background:var(--surface-0); font-size:12px; font-weight:600; padding:10px 8px; }
 
@@ -140,86 +178,207 @@ tfoot td { background:var(--surface-0); font-size:12px; font-weight:600; padding
 .status-dot { width:6px; height:6px; border-radius:50%; }
 .status-dot.saved   { background:var(--emerald); }
 .status-dot.saving  { background:var(--amber); animation:pulse 1s infinite; }
+.status-dot.saved-flash { background:var(--emerald); animation:pulseDot .8s ease-out; }
+@keyframes pulseDot { 0%{opacity:1; transform:scale(1)} 50%{opacity:.5; transform:scale(1.5)} 100%{opacity:1; transform:scale(1)} }
+@keyframes pulse { to { opacity:.5 } }
+
+.saved-ack {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--emerald);
+    font-weight: 600;
+    transition: opacity .4s;
+}
 </style>
 
 <script>
-const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+(function() {
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    const courseCode = <?= json_encode($course['code'] ?? 'matrix') ?>;
 
-function debounce(fn, ms) {
-    let t;
-    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-}
-
-function updateRowTotal(cloId) {
-    let total = 0;
-    document.querySelectorAll(`.weight-input[data-clo="${cloId}"]`).forEach(inp => {
-        total += parseFloat(inp.value) || 0;
-    });
-    const el = document.getElementById(`rowtotal-${cloId}`);
-    if (el) {
-        el.textContent = total > 0 ? total + '%' : '—';
-        el.className = `row-total ${total > 0 ? 'has-value' : ''}`;
+    // ── Debounce utility ─────────────────────────────────────────────
+    function debounce(fn, ms) {
+        let t;
+        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
     }
-}
 
-function updateColTotal(ploId) {
-    let total = 0;
-    document.querySelectorAll(`.weight-input[data-plo="${ploId}"]`).forEach(inp => {
-        total += parseFloat(inp.value) || 0;
-    });
-    const el = document.getElementById(`coltotal-${ploId}`);
-    if (el) {
-        const span = el.querySelector('span');
-        if (span) {
-            span.textContent = total > 0 ? total + '%' : '—';
-            span.className = `col-total ${total > 0 ? 'has-value' : ''}`;
+    // ── Row total validation ─────────────────────────────────────────
+    function updateRowTotal(cloId) {
+        let total = 0;
+        document.querySelectorAll(`.weight-input[data-clo="${cloId}"]`).forEach(inp => {
+            total += parseFloat(inp.value) || 0;
+        });
+        const el = document.getElementById(`rowtotal-${cloId}`);
+        if (el) {
+            el.textContent = total > 0 ? total + '%' : '—';
+            el.className = `row-total ${total > 0 ? 'has-value' : ''} ${total > 100 ? 'over-limit' : ''}`;
+        }
+        document.querySelectorAll(`.weight-input[data-clo="${cloId}"]`).forEach(inp => {
+            if (total > 100) {
+                inp.classList.add('row-over');
+            } else {
+                inp.classList.remove('row-over');
+            }
+        });
+        checkWarnings();
+    }
+
+    // ── Column total validation ─────────────────────────────────────
+    function updateColTotal(ploId) {
+        let total = 0;
+        document.querySelectorAll(`.weight-input[data-plo="${ploId}"]`).forEach(inp => {
+            total += parseFloat(inp.value) || 0;
+        });
+        const el = document.getElementById(`coltotal-${ploId}`);
+        if (el) {
+            const span = el.querySelector('span');
+            if (span) {
+                span.textContent = total > 0 ? total + '%' : '—';
+                span.className = `col-total ${total > 0 ? 'has-value' : ''} ${total > 100 ? 'over-limit' : ''}`;
+            }
+        }
+        checkWarnings();
+    }
+
+    // ── Global warning check ─────────────────────────────────────────
+    function checkWarnings() {
+        let rowOver = false, colOver = false;
+        document.querySelectorAll('.row-total').forEach(el => {
+            if (el.classList.contains('over-limit')) { rowOver = true; }
+        });
+        document.querySelectorAll('.col-total').forEach(el => {
+            if (el.classList.contains('over-limit')) { colOver = true; }
+        });
+        const warnRow = document.getElementById('warningRowSum');
+        const warnCol = document.getElementById('warningColSum');
+        if (warnRow) warnRow.style.display = rowOver ? 'flex' : 'none';
+        if (warnCol) warnCol.style.display = colOver ? 'flex' : 'none';
+    }
+
+    // ── Status bar helpers ───────────────────────────────────────────
+    function setStatusSaving() {
+        const dot = document.querySelector('.status-dot');
+        const txt = document.getElementById('matrixStatusText');
+        if (dot) dot.className = 'status-dot saving';
+        if (txt) txt.textContent = 'Đang lưu...';
+    }
+
+    function setStatusSaved() {
+        const dot = document.querySelector('.status-dot');
+        const txt = document.getElementById('matrixStatusText');
+        if (dot) dot.className = 'status-dot saved-flash';
+        if (txt) {
+            txt.innerHTML = '<span class="saved-ack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg> Đã lưu</span>';
+            setTimeout(() => {
+                if (txt) {
+                    txt.innerHTML = 'Tất cả thay đổi đã được lưu';
+                    txt.style.color = '';
+                }
+                if (dot) dot.className = 'status-dot saved';
+            }, 1800);
         }
     }
-}
 
-async function saveMapping(input) {
-    const cloId  = input.dataset.clo;
-    const ploId  = input.dataset.plo;
-    const weight = parseFloat(input.value) || 0;
-
-    const statusText = document.getElementById('matrixStatusText');
-    const statusDot  = document.querySelector('.status-dot');
-    if (statusDot) { statusDot.className = 'status-dot saving'; }
-    if (statusText) statusText.textContent = 'Đang lưu...';
-    input.classList.add('saving');
-
-    try {
-        const res = await fetch('/api/mapping/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clo_id: +cloId, plo_id: +ploId, weight, _token: CSRF }),
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-            input.classList.remove('saving');
-            input.classList.add('saved');
-            input.classList.toggle('has-value', weight > 0);
-            if (statusDot) statusDot.className = 'status-dot saved';
-            if (statusText) statusText.textContent = 'Đã lưu thành công';
-            setTimeout(() => input.classList.remove('saved'), 1000);
-        } else throw new Error(data.error);
-    } catch(e) {
-        input.classList.remove('saving');
-        window.Toast?.error('Lỗi lưu: ' + e.message);
-        if (statusDot) statusDot.className = 'status-dot saved';
+    function setStatusError(msg) {
+        const dot = document.querySelector('.status-dot');
+        const txt = document.getElementById('matrixStatusText');
+        if (dot) dot.className = 'status-dot saved';
+        if (txt) txt.textContent = msg;
+        window.Toast?.error(msg);
     }
-}
 
-const debouncedSave = debounce(saveMapping, 700);
+    // ── Save mapping ─────────────────────────────────────────────────
+    async function saveMapping(input) {
+        const cloId  = input.dataset.clo;
+        const ploId  = input.dataset.plo;
+        const weight = parseFloat(input.value) || 0;
 
-document.querySelectorAll('.weight-input').forEach(inp => {
-    if (inp.value) inp.classList.add('has-value');
+        setStatusSaving();
+        input.classList.add('saving');
 
-    inp.addEventListener('input', () => {
-        updateRowTotal(inp.dataset.clo);
-        updateColTotal(inp.dataset.plo);
-        debouncedSave(inp);
+        try {
+            const res = await fetch('/api/mapping/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clo_id: +cloId, plo_id: +ploId, weight, _token: CSRF }),
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                input.classList.remove('saving');
+                input.classList.add('saved');
+                input.classList.toggle('has-value', weight > 0);
+                setStatusSaved();
+                setTimeout(() => input.classList.remove('saved'), 1000);
+            } else {
+                throw new Error(data.error || 'Lỗi không xác định');
+            }
+        } catch(e) {
+            input.classList.remove('saving');
+            setStatusError('Lỗi lưu: ' + e.message);
+        }
+    }
+
+    const debouncedSave = debounce(saveMapping, 700);
+
+    // ── Attach input listeners ───────────────────────────────────────
+    document.querySelectorAll('.weight-input').forEach(inp => {
+        if (inp.value) inp.classList.add('has-value');
+
+        inp.addEventListener('input', () => {
+            updateRowTotal(inp.dataset.clo);
+            updateColTotal(inp.dataset.plo);
+            debouncedSave(inp);
+        });
+        inp.addEventListener('focus', () => inp.select());
     });
-    inp.addEventListener('focus', () => inp.select());
-});
+
+    // Initial warning check on page load
+    checkWarnings();
+
+    // ── CSV Export ───────────────────────────────────────────────────
+    document.getElementById('exportCsv')?.addEventListener('click', function() {
+        const rows = [['CLO/PLO']];
+        const ploCodes = Array.from(document.querySelectorAll('.mth-plo .plo-th-code')).map(el => el.textContent.trim());
+        rows[0].push(...ploCodes, 'Total');
+
+        document.querySelectorAll('.mapping-table tbody tr').forEach((tr, idx) => {
+            const cloCode = tr.querySelector('.clo-code')?.textContent?.trim() || `CLO${idx + 1}`;
+            const cells = [cloCode];
+            tr.querySelectorAll('.weight-input').forEach(inp => {
+                cells.push(inp.value || '0');
+            });
+            const totalCell = tr.querySelector('.row-total');
+            cells.push(totalCell?.textContent?.replace('%', '') || '0');
+            rows.push(cells);
+        });
+
+        const ploTotalRow = ['PLO Total'];
+        document.querySelectorAll('.col-total').forEach(el => {
+            ploTotalRow.push(el.textContent?.replace('%', '') || '0');
+        });
+        ploTotalRow.push('');
+        rows.push(ploTotalRow);
+
+        const date = new Date().toISOString().slice(0, 10);
+        const filename = `matrix_${courseCode}_${date}.csv`;
+        const csvContent = rows.map(r => r.map(cell => {
+            const s = String(cell);
+            return s.includes(',') || s.includes('"') || s.includes('\n')
+                ? `"${s.replace(/"/g, '""')}"`
+                : s;
+        }).join(',')).join('\r\n');
+
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        window.Toast?.success(`Đã xuất ${filename}`);
+    });
+})();
 </script>
