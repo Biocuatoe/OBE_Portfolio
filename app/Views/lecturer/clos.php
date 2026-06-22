@@ -394,6 +394,7 @@
 </style>
 
 <script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 const cloForm = document.getElementById('cloForm');
 const cloModal = document.getElementById('cloModal');
 const btnNewClo = document.getElementById('btnNewClo');
@@ -441,9 +442,12 @@ cloForm.addEventListener('submit', async (e) => {
     }
 
     try {
-        const response = await fetch('/lecturer/clo/store', {
+        const response = await fetch('/lecturer/clos', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken,
+            },
             body: JSON.stringify(data),
         });
         const result = await response.json();
@@ -467,10 +471,10 @@ async function deleteClo(id) {
 
     try {
         const response = await fetch(`/lecturer/clo/${id}/delete`, {
-            method: 'DELETE',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': document.querySelector('input[name="csrf_token"]').value,
+                'X-CSRF-Token': csrfToken,
             },
         });
         const result = await response.json();

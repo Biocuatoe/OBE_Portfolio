@@ -26,6 +26,7 @@ abstract class BaseController
      */
     protected function view(string $viewPath, array $data = [], string $layout = 'main'): void
     {
+        $data['csrf_token'] = $this->csrfToken();
         extract($data, EXTR_SKIP);
 
         $viewFile = __DIR__ . "/../app/Views/{$viewPath}.php";

@@ -63,6 +63,8 @@ $router->get('/logout', [AuthController::class, 'logout'],       'auth.logout');
 $router->get('/admin/dashboard',                        [AdminController::class, 'dashboard'],        'admin.dashboard');
 $router->get('/admin/programs',                         [AdminController::class, 'programs'],         'admin.programs');
 $router->post('/admin/programs',                        [AdminController::class, 'storeProgram'],     'admin.programs.store');
+$router->post('/admin/program/:id/update',             [AdminController::class, 'updateProgram'],     'admin.programs.update');
+$router->post('/admin/program/:id/delete',             [AdminController::class, 'deleteProgram'],     'admin.programs.delete');
 $router->get('/admin/program/:program_id/plos',         [AdminController::class, 'plos'],             'admin.plos');
 $router->post('/admin/plos',                            [AdminController::class, 'storePlo'],         'admin.plos.store');
 $router->post('/admin/plo/:id/delete',                  [AdminController::class, 'deletePlo'],        'admin.plos.delete');
@@ -78,6 +80,7 @@ $router->post('/admin/activity-log/:id/delete',          [AdminController::class
 $router->get('/admin/report/attainment/:program_id',    [AdminController::class, 'reportAttainment'], 'admin.report');
 
 // ── Lecturer routes ────────────────────────────────────────────────
+$router->post('/lecturer/assignment/:id/delete',         [LecturerController::class, 'deleteAssignment'], 'lecturer.assignments.delete');
 $router->get('/lecturer/dashboard',                             [LecturerController::class, 'dashboard'],         'lecturer.dashboard');
 $router->get('/lecturer/assignment/:assignment_id/clos',        [LecturerController::class, 'clos'],              'lecturer.clos');
 $router->post('/lecturer/clos',                                 [LecturerController::class, 'storeClo'],          'lecturer.clos.store');

@@ -7,6 +7,10 @@
         <p class="page-sub">Thống kê tỷ lệ đạt chuẩn đầu ra chương trình đào tạo theo PLO</p>
     </div>
     <div class="header-actions">
+        <button class="btn btn-primary btn-sm" id="btnAddPlo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Thêm PLO
+        </button>
         <select id="programFilter" class="form-control filter-select" aria-label="Chọn chương trình đào tạo">
             <?php foreach ($programs as $p): ?>
                 <option value="<?= $p['id'] ?>" <?= ($p['id'] == ($program_id ?? 0)) ? 'selected' : '' ?>>
@@ -221,6 +225,50 @@
 
 <?php endif; ?>
 
+<!-- ── Add PLO Modal ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="ploModal" role="dialog" aria-modal="true">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="ploModalTitle">Thêm chuẩn đầu ra (PLO)</h3>
+            <button class="modal-close" id="ploModalClose">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="ploForm" novalidate>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="plo-code">Mã PLO <span class="required">*</span></label>
+                    <input type="text" id="plo-code" name="code" class="form-control" placeholder="VD: PLO1" maxlength="20">
+                    <span class="field-error" id="err-code"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="plo-desc">Mô tả <span class="required">*</span></label>
+                    <textarea id="plo-desc" name="description" class="form-control" rows="3" placeholder="Mô tả chuẩn đầu ra..."></textarea>
+                    <span class="field-error" id="err-description"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="plo-category">Danh mục</label>
+                    <select id="plo-category" name="category" class="form-control">
+                        <option value="">— Chọn danh mục —</option>
+                        <option value="Knowledge">Knowledge (Kiến thức)</option>
+                        <option value="Skill">Skill (Kỹ năng)</option>
+                        <option value="Attitude">Attitude (Thái độ)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="ploModalCancel">Hủy</button>
+                <button type="submit" class="btn btn-primary" id="ploModalSubmit">
+                    <span class="btn-label">Thêm PLO</span>
+                    <span class="btn-spinner" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="spin"><circle cx="12" cy="12" r="10" stroke-dasharray="30 70"/></svg>
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <style>
 /* ── Page Header ─────────────────────────────────────────────────── */
 .page-header {
@@ -423,5 +471,46 @@
             }
         });
     }
+
+    // ── Add PLO Modal ─────────────────────────────────────────────
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    const ploModal = document.getElementById('ploModal');
+    const ploForm  = document.getElementById('ploForm');
+    const ploSubmitBtn = document.getElementById('ploModalSubmit');
+
+    document.getElementById('btnAddPlo')?.addEventListener('click', () => {
+        ploForm.reset();
+        ploModal.classList.add('open');
+    });
+    document.getElementById('ploModalClose')?.addEventListener('click', () => ploModal.classList.remove('open'));
+    document.getElementById('ploModalCancel')?.addEventListener('click', () => ploModal.classList.remove('open'));
+    ploModal?.addEventListener('click', e => { if (e.target === ploModal) ploModal.classList.remove('open'); });
+
+    ploForm?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        ploSubmitBtn.disabled = true;
+        const payload = {
+            program_id: <?= json_encode($program['id'] ?? 0) ?>,
+            code: document.getElementById('plo-code').value.trim(),
+            description: document.getElementById('plo-desc').value.trim(),
+            category: document.getElementById('plo-category').value,
+            _token: CSRF,
+        };
+        try {
+            const res = await fetch('/admin/plos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+            if (!res.ok) throw data;
+            window.Toast?.success('Đã thêm PLO mới.');
+            ploModal.classList.remove('open');
+            window.location.reload();
+        } catch(err) {
+            window.Toast?.error(err.error || 'Đã xảy ra lỗi.');
+            ploSubmitBtn.disabled = false;
+        }
+    });
 })();
 </script>

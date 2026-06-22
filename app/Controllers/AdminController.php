@@ -822,7 +822,7 @@ class AdminController extends BaseController
         $this->json(['status' => 'success']);
     }
 
-    public function toggleUser(array $params): void
+    public function toggleUserStatus(array $params): void
     {
         $this->requireAuth('admin');
         $this->verifyCsrf();

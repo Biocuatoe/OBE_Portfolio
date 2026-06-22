@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= htmlspecialchars($csrf_token ?? '') ?>">
     <title><?= htmlspecialchars($pageTitle ?? 'iSchool OBE System') ?></title>
 
     <!-- Google Fonts: Lexend Deca (UI) + Be Vietnam Pro (body) -->

@@ -151,6 +151,14 @@ class LecturerController extends BaseController
             $this->json(['error' => 'Thiếu thông tin bắt buộc.'], 422);
         }
 
+        if (!empty($body['id'])) {
+            $this->db->query(
+                "UPDATE clos SET code=?, description=?, bloom_level=? WHERE id=?",
+                [$data['code'], $data['description'], $data['bloom_level'], (int)$body['id']]
+            );
+            $this->json(['status' => 'success', 'id' => (int)$body['id'], 'updated' => true]);
+        }
+
         try {
             $this->db->query(
                 "INSERT INTO clos (course_id, code, description, bloom_level) VALUES (?,?,?,?)",
