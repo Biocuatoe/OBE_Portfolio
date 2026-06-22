@@ -239,11 +239,11 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- SEED DATA (Demo)
 -- ================================================================
 INSERT INTO `users` (`username`,`email`,`password`,`full_name`,`role`) VALUES
-('admin01',   'admin@ischool.edu.vn',    '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Nguyễn Văn An',    'admin'),
-('lecturer01','gv01@ischool.edu.vn',     '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Trần Thị Bình',    'lecturer'),
-('student01', 'sv01@student.ischool.vn', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Lê Minh Cường',    'student'),
-('student02', 'sv02@student.ischool.vn', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Phạm Thùy Dương',  'student');
--- Password for all: "password"
+('admin01',   'admin@ischool.edu.vn',    '$2y$12$F2oj/xkVO0VFbyhZ/nl8Jemk39.RpBpkSuypGvedi2iFiZbKhPGe6', 'Nguyễn Văn An',    'admin'),
+('lecturer01','gv01@ischool.edu.vn',     '$2y$12$Jx1Hp9seXGMythjv84907uYkF5YYRV2XtcdOwVMbBYXwD2dIxSCa6', 'Trần Thị Bình',    'lecturer'),
+('student01', 'sv01@student.ischool.vn', '$2y$12$F2oj/xkVO0VFbyhZ/nl8Jemk39.RpBpkSuypGvedi2iFiZbKhPGe6', 'Lê Minh Cường',    'student'),
+('student02', 'sv02@student.ischool.vn', '$2y$12$Jx1Hp9seXGMythjv84907uYkF5YYRV2XtcdOwVMbBYXwD2dIxSCa6', 'Phạm Thùy Dương',  'student');
+-- Password for all demo accounts: "password" (bcrypt, cost=12)
 
 INSERT INTO `programs` (`code`,`name`,`description`,`admin_id`) VALUES
 ('CNTT2024','Công nghệ Thông tin K2024','Chương trình đào tạo kỹ sư CNTT chuẩn CDIO',1);
