@@ -13,8 +13,8 @@ const Toast = (() => {
      if (!container) return;
 
      const icons = {
-         success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>`,
-         error:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+         success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`,
+         error:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
          info:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
      };
 
@@ -79,8 +79,8 @@ window.DashboardCharts = {
                 datasets: [{
                     label: 'Sinh viên',
                     data: counts.length ? counts : [0],
-                    backgroundColor: 'rgba(99,102,241,0.75)',
-                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(79,70,229,0.8)',
+                    borderColor: '#4f46e5',
                     borderWidth: 1,
                     borderRadius: 8,
                     borderSkipped: false,
@@ -102,7 +102,7 @@ window.DashboardCharts = {
                     x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgba(51,65,85,0.5)' },
+                        grid: { color: 'rgba(226,232,240,0.8)' },
                         ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1, callback: v => Number.isInteger(v) ? v : '' }
                     }
                 }
@@ -127,7 +127,7 @@ window.DashboardCharts = {
                 datasets: [{
                     data: [passCount || 0, failCount || 0],
                     backgroundColor: ['#10b981', '#f43f5e'],
-                    borderColor: '#1e293b',
+                    borderColor: '#ffffff',
                     borderWidth: 3,
                     hoverOffset: 6,
                 }]
@@ -157,12 +157,10 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
-        // Hook point: fetch(`/admin/activity-logs/filter?range=${this.dataset.range}`)
-        // and update #activityFeed.innerHTML with the response.
     });
 });
 
-// ── Admin AJAX API helper ──────────────────────────────────────────
+// ── Expose globals ───────────────────────────────────────────────
 // Reusable CRUD helpers for admin pages.
 window.AdminAPI = {
     /** Generic fetch wrapper that auto-injects CSRF and throws on non-2xx. */
@@ -216,14 +214,6 @@ window.AdminAPI = {
         formEl.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
     },
 };
-
-// ── Activity log filter (Admin Dashboard) ─────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-    });
-});
 
 // ── Expose globals ───────────────────────────────────────────────
 window.Toast        = Toast;

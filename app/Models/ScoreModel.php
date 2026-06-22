@@ -95,7 +95,7 @@ class ScoreModel extends BaseModel
              LEFT JOIN clo_attainments ca ON ca.clo_id = c.id AND ca.student_id = ?
              WHERE c.course_id = ?
                AND a.is_published = 1
-             GROUP BY c.id, c.code, c.description, c.bloom_level, ca.achieved_percentage
+             GROUP BY c.id, c.code, c.description, c.bloom_level
              ORDER BY c.code",
             [$studentId, $courseId]
         );

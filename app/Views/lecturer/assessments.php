@@ -217,15 +217,15 @@
 
 .filter-group label {
     font-weight: 500;
-    color: var(--text-secondary);
+    color: #64748b;
 }
 
 .filter-group select {
     padding: 0.5rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background-color: var(--surface-1);
-    color: var(--text-primary);
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #0f172a;
     cursor: pointer;
     min-width: 200px;
 }
@@ -242,13 +242,13 @@
 }
 
 .stat-label {
-    color: var(--text-secondary);
+    color: #64748b;
     font-size: 0.9rem;
 }
 
 .stat-item strong {
     font-size: 1.1rem;
-    color: var(--text-primary);
+    color: #0f172a;
 }
 
 .title-cell {
@@ -265,31 +265,31 @@
 .weight-value {
     font-weight: 600;
     padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-sm);
+    border-radius: 6px;
     display: inline-block;
 }
 
 .weight-value.weight-low {
-    background-color: rgba(16, 185, 129, 0.1);
+    background-color: rgba(16, 185, 129, 0.08);
     color: #10b981;
 }
 
 .weight-value.weight-mid {
-    background-color: rgba(245, 158, 11, 0.1);
+    background-color: rgba(245, 158, 11, 0.08);
     color: #f59e0b;
 }
 
 .weight-value.weight-high {
-    background-color: rgba(244, 63, 94, 0.1);
-    color: #f43f5e;
+    background-color: rgba(244, 63, 94, 0.08);
+    color: #ef4444;
 }
 
 .date-value {
-    color: var(--text-secondary);
+    color: #64748b;
 }
 
 .text-muted {
-    color: var(--text-tertiary);
+    color: #94a3b8;
 }
 
 .badge-count {
@@ -298,7 +298,7 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    background-color: var(--accent-color);
+    background-color: #4f46e5;
     color: white;
     border-radius: 50%;
     font-weight: 600;
@@ -311,10 +311,10 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.4rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background-color: var(--surface-1);
-    color: var(--text-primary);
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #0f172a;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 0.9rem;
@@ -327,13 +327,13 @@
 
 .publish-toggle.draft {
     border-color: #6366f1;
-    background-color: rgba(99, 102, 241, 0.1);
+    background-color: rgba(99, 102, 241, 0.08);
     color: #6366f1;
 }
 
 .publish-toggle.published {
     border-color: #10b981;
-    background-color: rgba(16, 185, 129, 0.1);
+    background-color: rgba(16, 185, 129, 0.08);
     color: #10b981;
 }
 

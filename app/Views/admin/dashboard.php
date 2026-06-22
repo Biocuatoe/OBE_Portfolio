@@ -50,7 +50,7 @@
                 <div class="chart-subtitle">Phân bố sinh viên đã đăng ký</div>
             </div>
             <div class="chart-legend">
-                <div class="legend-dot" style="background:#6366f1"></div>
+                <div class="legend-dot"></div>
                 <span class="legend-text">Sinh viên</span>
             </div>
         </div>
@@ -76,12 +76,12 @@
         </div>
         <div class="doughnut-legend-row">
             <div class="doughnut-legend-item">
-                <div class="legend-dot" style="background:#10b981"></div>
+                <div class="legend-dot legend-dot--pass"></div>
                 <span>Đạt</span>
                 <strong id="ploPassCount">--</strong>
             </div>
             <div class="doughnut-legend-item">
-                <div class="legend-dot" style="background:#f43f5e"></div>
+                <div class="legend-dot legend-dot--fail"></div>
                 <span>Chưa đạt</span>
                 <strong id="ploFailCount">--</strong>
             </div>
@@ -121,7 +121,7 @@
 </div>
 
 <!-- Quick Actions + Activity Logs -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+<div class="split-grid">
     <!-- Quick Actions -->
     <div class="section-card">
         <div class="section-header"><h3 class="section-title">Thao tác nhanh</h3></div>
@@ -338,163 +338,3 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-
-<style>
-/* ── Quick Action Cards ─────────────────────────────────────────────── */
-.quick-actions-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.qa-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background: var(--surface-0);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-md);
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all var(--transition);
-    position: relative;
-    overflow: hidden;
-}
-.qa-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity var(--transition);
-}
-.qa-card:hover {
-    border-color: var(--accent);
-    color: var(--text-primary);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(99,102,241,.15);
-}
-.qa-card--primary { border-color: rgba(99,102,241,.3); }
-
-.qa-icon {
-    width: 38px; height: 38px;
-    border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center;
-    background: var(--accent-soft);
-    color: var(--accent);
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-}
-.qa-icon svg { width: 18px; height: 18px; }
-.qa-icon--blue    { background: rgba(14,165,233,.12); color: var(--sky); }
-.qa-icon--emerald { background: rgba(16,185,129,.12); color: var(--emerald); }
-.qa-icon--amber   { background: rgba(245,158,11,.12); color: var(--amber); }
-
-.qa-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
-.qa-title { font-weight: 600; font-size: 13px; color: var(--text-primary); }
-.qa-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-
-.qa-arrow {
-    width: 16px; height: 16px;
-    color: var(--text-muted);
-    flex-shrink: 0;
-    transition: transform var(--transition), color var(--transition);
-    position: relative; z-index: 1;
-}
-.qa-card:hover .qa-arrow { transform: translateX(3px); color: var(--accent); }
-
-/* ── Activity Feed ─────────────────────────────────────────────────── */
-.activity-filter {
-    display: flex;
-    gap: 4px;
-    background: var(--surface-0);
-    border: 1px solid var(--surface-2);
-    border-radius: 8px;
-    padding: 3px;
-}
-.filter-btn {
-    background: none;
-    border: none;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all var(--transition);
-    font-family: inherit;
-}
-.filter-btn:hover { color: var(--text-primary); }
-.filter-btn.active {
-    background: var(--accent);
-    color: white;
-}
-
-.activity-list { display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto; }
-.activity-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(51,65,85,.3);
-}
-.activity-item:last-child { border-bottom: none; }
-
-.activity-icon-wrap {
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-}
-.activity-icon-wrap svg { width: 14px; height: 14px; }
-
-.action-login    { background: rgba(99,102,241,.15); color: #a5b4fc; }
-.action-logout   { background: rgba(100,116,139,.15); color: #94a3b8; }
-.action-create   { background: rgba(16,185,129,.15);  color: #6ee7b7; }
-.action-update   { background: rgba(14,165,233,.15);  color: #7dd3fc; }
-.action-delete   { background: rgba(244,63,94,.15);   color: #fda4af; }
-.action-default  { background: rgba(100,116,139,.15); color: #94a3b8; }
-
-.activity-content { flex:1; font-size:12px; display:flex; flex-wrap:wrap; gap:3px; align-items:center; }
-.activity-user { font-weight:600; color:var(--text-primary); }
-.activity-action { color:var(--text-secondary); }
-.activity-entity { color:var(--text-muted); font-style:italic; }
-.activity-time { font-size:11px; color:var(--text-muted); white-space:nowrap; flex-shrink:0; }
-
-/* ── Doughnut center overlay ──────────────────────────────────────── */
-.doughnut-wrapper { position: relative; }
-.doughnut-center {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    pointer-events: none;
-}
-.doughnut-pct {
-    display: block;
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 800;
-    font-size: 28px;
-    color: var(--text-primary);
-    line-height: 1;
-}
-.doughnut-label { font-size: 11px; color: var(--text-muted); }
-.doughnut-legend-row {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    margin-top: 12px;
-}
-.doughnut-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-.doughnut-legend-item strong { color: var(--text-primary); }
-
-.btn-link { font-size:12px; color:var(--accent); text-decoration:none; }
-.btn-link:hover { text-decoration:underline; }
-</style>

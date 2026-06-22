@@ -19,6 +19,7 @@
 
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar">
+        <!-- Sidebar Header -->
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <div class="logo-icon">
@@ -41,19 +42,19 @@
             </div>
         </div>
 
-        <!-- User profile mini -->
+        <!-- User Profile Section -->
         <div class="sidebar-user">
             <div class="user-avatar">
                 <?= strtoupper(mb_substr($_SESSION['user_name'] ?? 'U', 0, 1)) ?>
             </div>
             <div class="user-info">
                 <div class="user-name"><?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></div>
-                <div class="user-role-badge role-<?= $_SESSION['user_role'] ?? '' ?>">
+                <span class="user-role-badge role-<?= $_SESSION['user_role'] ?? '' ?>">
                     <?php
                     $roleLabels = ['admin' => 'Quản trị viên', 'lecturer' => 'Giảng viên', 'student' => 'Sinh viên'];
                     echo $roleLabels[$_SESSION['user_role'] ?? ''] ?? 'Unknown';
                     ?>
-                </div>
+                </span>
             </div>
         </div>
 
@@ -62,52 +63,123 @@
             <?php if (($_SESSION['user_role'] ?? '') === 'student'): ?>
             <div class="nav-section-label">Menu chính</div>
             <a href="/student/dashboard" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'dashboard') ? 'active' : '' ?>">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                E-Portfolio
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span>E-Portfolio</span>
             </a>
             <a href="/student/courses" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'courses') ? 'active' : '' ?>">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                Môn học
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                <span>Môn học</span>
             </a>
             <a href="/student/portfolio/export" class="nav-item">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Xuất PDF
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Xuất PDF</span>
             </a>
             <?php endif; ?>
 
             <?php if (($_SESSION['user_role'] ?? '') === 'lecturer'): ?>
             <div class="nav-section-label">Giảng dạy</div>
             <a href="/lecturer/dashboard" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'dashboard') ? 'active' : '' ?>">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                Tổng quan
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                <span>Tổng quan</span>
             </a>
-            <a href="#" class="nav-item">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                Chấm điểm
+            <a href="/lecturer/grading" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'grading') ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                <span>Chấm điểm</span>
+            </a>
+            <?php endif; ?>
+
+            <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
+            <div class="nav-section-label">Quản trị</div>
+            <a href="/admin/dashboard" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'dashboard') ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                <span>Tổng quan</span>
+            </a>
+            <a href="/admin/programs" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'programs') ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+                <span>Chương trình đào tạo</span>
+            </a>
+            <a href="/admin/courses" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'courses') ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                <span>Môn học</span>
+            </a>
+            <a href="/admin/users" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'users') ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span>Người dùng</span>
+            </a>
+            <a href="/admin/activity-log" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], 'activity-log') ? 'active' : '' ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <span>Nhật ký hoạt động</span>
             </a>
             <?php endif; ?>
         </nav>
 
+        <!-- Sidebar Footer -->
         <div class="sidebar-footer">
             <a href="/logout" class="nav-item nav-logout">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Đăng xuất
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Đăng xuất</span>
             </a>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Top bar -->
+        <!-- Topbar -->
         <header class="topbar">
             <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
-                    <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="20" height="20">
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
                 </svg>
             </button>
             <div class="topbar-title"><?= htmlspecialchars($pageTitle ?? 'Dashboard') ?></div>
             <div class="topbar-actions">
-                <div class="topbar-semester">HK 2024-1</div>
+                <span class="topbar-semester">HK 2024-1</span>
             </div>
         </header>
 

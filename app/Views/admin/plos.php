@@ -7,7 +7,7 @@
         <p class="page-sub">Thống kê tỷ lệ đạt chuẩn đầu ra chương trình đào tạo theo PLO</p>
     </div>
     <div class="header-actions">
-        <select id="programFilter" class="form-control" style="min-width:240px" aria-label="Chọn chương trình đào tạo">
+        <select id="programFilter" class="form-control filter-select" aria-label="Chọn chương trình đào tạo">
             <?php foreach ($programs as $p): ?>
                 <option value="<?= $p['id'] ?>" <?= ($p['id'] == ($program_id ?? 0)) ? 'selected' : '' ?>>
                     <?= htmlspecialchars($p['code'] . ' – ' . $p['name']) ?>
@@ -47,7 +47,7 @@
 <?php else: ?>
 
     <!-- PLO Attainment Table -->
-    <div class="card">
+    <div class="card section-card">
         <div class="card-header">
             <div class="section-title-group">
                 <h3 class="card-title">Bảng đạt chuẩn theo PLO</h3>
@@ -55,15 +55,15 @@
             </div>
             <div class="legend-group">
                 <div class="legend-item">
-                    <span class="legend-dot" style="background: var(--emerald)"></span>
+                    <span class="legend-dot legend-dot--emerald"></span>
                     <span class="legend-text">≥ 70% Đạt</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-dot" style="background: var(--amber)"></span>
+                    <span class="legend-dot legend-dot--amber"></span>
                     <span class="legend-text">50–69% Cần cải thiện</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-dot" style="background: var(--rose)"></span>
+                    <span class="legend-dot legend-dot--rose"></span>
                     <span class="legend-text">< 50% Chưa đạt</span>
                 </div>
             </div>
@@ -73,13 +73,13 @@
             <table class="data-table striped">
                 <thead>
                     <tr>
-                        <th style="min-width:90px">Mã PLO</th>
-                        <th style="min-width:280px">Mô tả</th>
-                        <th style="min-width:120px">Danh mục</th>
-                        <th class="text-center" style="min-width:70px">SV đo</th>
-                        <th class="text-center" style="min-width:100px">Trung bình %</th>
-                        <th class="text-center" style="min-width:130px">Đạt</th>
-                        <th class="text-center" style="min-width:110px">Mức đạt</th>
+                        <th class="col-plo-code">Mã PLO</th>
+                        <th class="col-plo-desc">Mô tả</th>
+                        <th class="col-plo-cat">Danh mục</th>
+                        <th class="text-center col-plo-students">SV đo</th>
+                        <th class="text-center col-plo-avg">Trung bình %</th>
+                        <th class="text-center col-plo-pass">Đạt</th>
+                        <th class="text-center col-plo-level">Mức đạt</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -126,15 +126,15 @@
                                 <span class="badge badge-accent"><?= $measured ?></span>
                             </td>
                             <td class="text-center">
-                                <span class="<?= $avgClass ?>" style="font-weight:700;font-size:14px"><?= $avg > 0 ? number_format($avg, 1) . '%' : '—' ?></span>
+                                <span class="<?= $avgClass ?> plo-avg-value"><?= $avg > 0 ? number_format($avg, 1) . '%' : '—' ?></span>
                             </td>
                             <td class="text-center">
                                 <?php if ($measured > 0): ?>
-                                    <div style="display:flex;align-items:center;gap:8px;justify-content:center">
+                                    <div class="cell-progress">
                                         <div class="mini-progress-track">
                                             <div class="mini-progress-fill <?= $barClass ?>" style="width:<?= min($passRate, 100) ?>%"></div>
                                         </div>
-                                        <span class="text-muted" style="font-size:11px;font-weight:500"><?= $passed ?>/<?= $measured ?></span>
+                                        <span class="mini-pass-count"><?= $passed ?>/<?= $measured ?></span>
                                     </div>
                                 <?php else: ?>
                                     <span class="text-muted text-sm">—</span>
@@ -154,17 +154,17 @@
         $overallPct = $totalMeasured > 0 ? round($totalPassed / $totalMeasured * 100, 1) : 0;
         $overallClass = $overallPct >= 70 ? 'fill--good' : ($overallPct >= 50 ? 'fill--mid' : 'fill--low');
         ?>
-        <div class="summary-bar" style="margin-top:var(--space-5)">
+        <div class="summary-bar">
             <div class="summary-stat">
                 <span class="label">Tổng hợp toàn chương trình</span>
-                <span class="label text-muted" style="font-size:11px"><?= $totalPassed ?> / <?= $totalMeasured ?> SV đạt chuẩn</span>
+                <span class="text-muted summary-label-small"><?= $totalPassed ?> / <?= $totalMeasured ?> SV đạt chuẩn</span>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px">
-                <div class="progress-track" style="flex:1">
+            <div class="summary-progress-row">
+                <div class="progress-track progress-track--main">
                     <div class="progress-fill <?= $overallClass ?>" style="width:<?= min($overallPct, 100) ?>%"></div>
                     <div class="progress-threshold" style="left:70%"></div>
                 </div>
-                <span class="<?= $overallPct >= 70 ? 'text-emerald' : ($overallPct >= 50 ? 'text-amber' : 'text-rose') ?>" style="font-weight:800;font-size:18px;flex-shrink:0">
+                <span class="summary-pct <?= $overallPct >= 70 ? 'text-emerald' : ($overallPct >= 50 ? 'text-amber' : 'text-rose') ?>">
                     <?= $overallPct ?>%
                 </span>
             </div>
@@ -173,7 +173,7 @@
 
     <!-- Top Students Section -->
     <?php if (!empty($top_students)): ?>
-    <div class="card">
+    <div class="card section-card">
         <div class="card-header">
             <div class="section-title-group">
                 <h3 class="card-title">Top sinh viên xuất sắc</h3>
@@ -209,7 +209,7 @@
                         <div class="mini-progress-track">
                             <div class="mini-progress-fill <?= $barCls ?>" style="width:<?= min($pct, 100) ?>%"></div>
                         </div>
-                        <span class="<?= $pct >= 70 ? 'text-emerald' : ($pct >= 50 ? 'text-amber' : 'text-rose') ?>" style="font-weight:700;font-size:13px;min-width:44px;text-align:right">
+                        <span class="student-pct <?= $pct >= 70 ? 'text-emerald' : ($pct >= 50 ? 'text-amber' : 'text-rose') ?>">
                             <?= number_format($pct, 1) ?>%
                         </span>
                     </div>
@@ -235,35 +235,59 @@
     font-family: 'Lexend Deca', sans-serif;
     font-size: 20px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #0f172a;
     margin-bottom: 2px;
 }
-.page-sub { font-size: 13px; color: var(--text-muted); }
+.page-sub { font-size: 13px; color: #94a3b8; }
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mt-8 { margin-top: 8px; }
+
+/* ── Filter Select ─────────────────────────────────────────────── */
+.filter-select { min-width: 240px; }
 
 /* ── Legend ──────────────────────────────────────────────────────── */
 .legend-group { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.legend-text { font-size: 11px; color: var(--text-muted); }
+.legend-dot--emerald { background: #10b981; }
+.legend-dot--amber   { background: #f59e0b; }
+.legend-dot--rose    { background: #ef4444; }
+.legend-text { font-size: 11px; color: #94a3b8; }
 
-/* ── Cell primary ───────────────────────────────────────────────── */
-.cell-primary { font-size: 13px; color: var(--text-primary); }
-.text-center { text-align: center; }
-.text-muted  { color: var(--text-muted); }
-.text-sm     { font-size: 12px; }
+/* ── Table Column Widths ────────────────────────────────────────── */
+.col-plo-code   { min-width: 90px; }
+.col-plo-desc   { min-width: 280px; }
+.col-plo-cat    { min-width: 120px; }
+.col-plo-students { min-width: 70px; }
+.col-plo-avg    { min-width: 100px; }
+.col-plo-pass   { min-width: 130px; }
+.col-plo-level  { min-width: 110px; }
+
+/* ── Cell Styles ────────────────────────────────────────────────── */
+.cell-primary { font-size: 13px; color: #0f172a; }
+.cell-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+.plo-avg-value { font-weight: 700; font-size: 14px; }
+.mini-pass-count { font-size: 11px; font-weight: 500; color: #94a3b8; }
 
 /* ── Mini Progress Bar ─────────────────────────────────────────── */
 .mini-progress-track {
     height: 5px;
-    background: var(--surface-2);
+    background: #e2e8f0;
     border-radius: 3px;
     overflow: hidden;
     width: 70px;
     flex-shrink: 0;
 }
-.mini-progress-fill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.16,1,.3,1); }
+.mini-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
 /* ── Top Students ────────────────────────────────────────────────── */
 .top-students-grid {
@@ -276,15 +300,16 @@
     align-items: center;
     gap: 12px;
     padding: 10px 14px;
-    background: var(--surface-0);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-md);
-    transition: border-color var(--transition);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    transition: border-color 0.2s ease;
 }
-.student-rank-card:hover { border-color: var(--surface-3); }
+.student-rank-card:hover { border-color: #cbd5e1; }
 
 .rank-badge {
-    width: 28px; height: 28px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -296,36 +321,89 @@
 }
 
 .student-info { flex: 1; min-width: 0; }
-.student-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.student-user { font-size: 11px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.student-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.student-user {
+    font-size: 11px;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 .student-bar-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.student-pct { font-weight: 700; font-size: 13px; min-width: 44px; text-align: right; }
 
-/* ── Progress Track (shared) ────────────────────────────────────── */
-.progress-track {
+/* ── Progress Track (PLO summary) ──────────────────────────────── */
+.progress-track--main {
+    flex: 1;
     height: 6px;
-    background: var(--surface-2);
+    background: #e2e8f0;
     border-radius: 3px;
     position: relative;
     overflow: visible;
-    flex: 1;
 }
 .progress-fill {
     height: 100%;
     border-radius: 3px;
-    transition: width 1s cubic-bezier(.16,1,.3,1);
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .fill--good { background: linear-gradient(90deg, #10b981, #34d399); }
 .fill--mid  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.fill--low  { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+.fill--low  { background: linear-gradient(90deg, #ef4444, #fb7185); }
 .progress-threshold {
     position: absolute;
-    top: -2px; bottom: -2px;
+    top: -2px;
+    bottom: -2px;
     width: 2px;
-    background: rgba(245,158,11,.6);
+    background: rgba(245, 158, 11, 0.6);
     border-radius: 1px;
 }
 
+/* ── Summary Bar ────────────────────────────────────────────────── */
+.summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+.summary-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.summary-stat .label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+}
+.summary-label-small { font-size: 11px; font-weight: 500; }
+.summary-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 200px;
+}
+.summary-pct {
+    font-weight: 800;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .top-students-grid { grid-template-columns: 1fr; }
     .header-actions { flex-direction: column; align-items: stretch; }

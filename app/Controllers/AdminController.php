@@ -1014,7 +1014,7 @@ class AdminController extends BaseController
                 "SELECT COUNT(DISTINCT ca.student_id) AS c
                  FROM clo_attainment ca
                  JOIN clos c ON c.id = ca.clo_id
-                 JOIN clo_plos cp ON cp.clo_id = c.id
+                 JOIN clo_plo_mappings cp ON cp.clo_id = c.id
                  WHERE cp.plo_id = ?",
                 [$plo['id']]
             );
@@ -1022,22 +1022,22 @@ class AdminController extends BaseController
 
             // Average attainment from clo_attainment
             $avgRow = $this->db->fetchOne(
-                "SELECT ROUND(AVG(ca.attainment_pct), 1) AS avg_pct
+                "SELECT ROUND(AVG(ca.achieved_percentage), 1) AS avg_pct
                  FROM clo_attainment ca
                  JOIN clos c ON c.id = ca.clo_id
-                 JOIN clo_plos cp ON cp.clo_id = c.id
+                 JOIN clo_plo_mappings cp ON cp.clo_id = c.id
                  WHERE cp.plo_id = ?",
                 [$plo['id']]
             );
             $avgAttainment = (float)($avgRow['avg_pct'] ?? 0);
 
-            // Students passed (attainment_pct >= 70)
+            // Students passed (achieved_percentage >= 70)
             $passedRow = $this->db->fetchOne(
                 "SELECT COUNT(DISTINCT ca.student_id) AS c
                  FROM clo_attainment ca
                  JOIN clos c ON c.id = ca.clo_id
-                 JOIN clo_plos cp ON cp.clo_id = c.id
-                 WHERE cp.plo_id = ? AND ca.attainment_pct >= 70",
+                 JOIN clo_plo_mappings cp ON cp.clo_id = c.id
+                 WHERE cp.plo_id = ? AND ca.achieved_percentage >= 70",
                 [$plo['id']]
             );
             $studentsPassed = (int)($passedRow['c'] ?? 0);
@@ -1051,7 +1051,7 @@ class AdminController extends BaseController
             $clos = $this->db->fetchAll(
                 "SELECT c.code
                  FROM clos c
-                 JOIN clo_plos cp ON cp.clo_id = c.id
+                 JOIN clo_plo_mappings cp ON cp.clo_id = c.id
                  WHERE cp.plo_id = ?
                  ORDER BY c.code",
                 [$plo['id']]
@@ -1074,15 +1074,15 @@ class AdminController extends BaseController
         // Top 10 students by overall PLO attainment
         $topStudents = $this->db->fetchAll(
             "SELECT u.id, u.full_name, u.username,
-                ROUND(AVG(ca.attainment_pct), 1) AS overall_pct,
+                ROUND(AVG(ca.achieved_percentage), 1) AS overall_pct,
                 COUNT(DISTINCT cp.plo_id) AS plos_measured
              FROM users u
              JOIN enrollments e ON e.student_id = u.id
-             JOIN assignments a ON a.id = e.assignment_id
-             JOIN courses c ON c.id = a.course_id
+             JOIN course_assignments ca2 ON ca2.id = e.assignment_id
+             JOIN courses c ON c.id = ca2.course_id
              JOIN clo_attainment ca ON ca.student_id = u.id
              JOIN clos cl ON cl.id = ca.clo_id
-             JOIN clo_plos cp ON cp.clo_id = cl.id
+             JOIN clo_plo_mappings cp ON cp.clo_id = cl.id
              JOIN plos pl ON pl.id = cp.plo_id AND pl.program_id = ?
              WHERE c.program_id = ?
              GROUP BY u.id

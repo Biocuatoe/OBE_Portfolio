@@ -102,8 +102,19 @@ class StudentController extends BaseController
         $this->requireAuth('student');
         $studentId = (int)$_SESSION['user_id'];
 
-        $ploData = $this->scoreModel->getStudentPloData($studentId, 1);
         $student = $this->db->fetchOne("SELECT * FROM users WHERE id = ?", [$studentId]);
+        $program = $this->db->fetchOne(
+            "SELECT p.id FROM programs p
+             JOIN courses c ON c.program_id = p.id
+             JOIN course_assignments ca ON ca.course_id = c.id
+             JOIN enrollments e ON e.assignment_id = ca.id
+             WHERE e.student_id = ?
+             LIMIT 1",
+            [$studentId]
+        );
+        $programId = $program ? (int)$program['id'] : 1;
+
+        $ploData = $this->scoreModel->getStudentPloData($studentId, $programId);
 
         // Render HTML template cho PDF
         ob_start();

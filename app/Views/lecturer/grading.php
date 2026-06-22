@@ -98,53 +98,56 @@ $isFullyComplete  = ($fullyGradedCount === $totalStudents && $totalStudents > 0 
 </div>
 
 <!-- Stats UI (B6) -->
-<div id="gradingStatsTab" style="margin-top:16px;display:none;">
-    <div class="grading-stats-panel">
-        <div style="display:flex;gap:16px;align-items:flex-start;">
-            <div style="flex:1;min-width:360px;">
-                <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Phân bố điểm</h3>
-                <div id="gradeDistributionBars" style="display:flex;gap:10px;align-items:flex-end;height:220px;">
-                </div>
+<div class="gsp-panel" id="gradingStatsTab">
+    <div class="gsp-inner">
+        <div class="gsp-row">
+            <div class="gsp-col">
+                <h3 class="gsp-section-title">Phân bố điểm</h3>
+                <div class="gsp-dist-bars" id="gradeDistributionBars"></div>
             </div>
-            <div style="flex:1;min-width:320px;">
-                <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Hoàn thành chấm điểm</h3>
-                <div class="gop-track" style="height:10px;background:var(--surface-2);">
-                    <div class="gop-fill" id="statsGopFill" style="width:0%;height:10px;"></div>
+            <div class="gsp-col">
+                <h3 class="gsp-section-title">Hoàn thành chấm điểm</h3>
+                <div class="gop-track gop-track--sm">
+                    <div class="gop-fill" id="statsGopFill"></div>
                 </div>
-                <div id="statsGopCount" style="margin-top:8px;color:var(--text-secondary);font-size:12px;">—</div>
-                <div id="statsDistributionText" style="margin-top:14px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text-secondary);"></div>
+                <div class="gsp-gop-count" id="statsGopCount">—</div>
+                <div class="gsp-dist-text" id="statsDistributionText"></div>
             </div>
         </div>
 
-        <div style="margin-top:18px;">
-            <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Bảng stats theo criteria</h3>
-            <div class="table-scroll" style="border:1px solid var(--surface-2);border-radius:10px;overflow:hidden;">
-                <table style="width:100%;border-collapse:collapse;">
+        <div class="gsp-criteria-section">
+            <h3 class="gsp-section-title">Bảng stats theo criteria</h3>
+            <div class="table-scroll gsp-table-wrap">
+                <table class="gsp-table">
                     <thead>
                     <tr>
-                        <th style="padding:10px 12px;background:var(--surface-0);text-align:left;font-size:11px;color:var(--text-muted);">Criteria</th>
-                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Avg</th>
-                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Min</th>
-                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Max</th>
-                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Đã chấm</th>
+                        <th>Criteria</th>
+                        <th>Avg</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Đã chấm</th>
                     </tr>
                     </thead>
-                    <tbody id="statsCriteriaRows">
-                    </tbody>
+                    <tbody id="statsCriteriaRows"></tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
 
-<div class="grading-toolbar" style="margin-top:16px;">
-
-    <div class="save-status-bar" id="saveStatusBar">
-        <div class="save-dots"><span></span><span></span><span></span></div>
-        <span class="save-text" id="saveText">Tất cả thay đổi đã được lưu</span>
+<div class="grading-toolbar">
+    <div class="toolbar-top">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnToggleStats">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            Thống kê
+        </button>
+        <div class="save-status-bar" id="saveStatusBar">
+            <div class="save-dots"><span></span><span></span><span></span></div>
+            <span class="save-text" id="saveText">Tất cả thay đổi đã được lưu</span>
+        </div>
     </div>
     <div class="toolbar-actions">
-        <span class="keyboard-hint-inline"><kbd>Tab</kbd> di chuyển &nbsp;·&nbsp; <kbd>↑↓</kbd> lên/xuống</span>
+        <span class="keyboard-hint-inline"><kbd>Tab</kbd> di chuyển &nbsp;&middot;&nbsp; <kbd>↑↓</kbd> lên/xuống</span>
         <button class="btn-save-all" id="btnSaveAll">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -287,29 +290,29 @@ window.getCsrfToken = function () {
 </script>
 
 <!-- Confirm Modal -->
-<div class="confirm-overlay" id="confirmOverlay" style="display:none">
-    <div class="confirm-modal">
-        <div class="confirm-icon">✓</div>
-        <h3 class="confirm-title">Xác nhận hoàn thành chấm điểm</h3>
-        <p class="confirm-desc">
+<div class="modal-overlay" id="confirmOverlay">
+    <div class="modal modal--confirm">
+        <div class="modal-icon">✓</div>
+        <h3 class="modal-title">Xác nhận hoàn thành chấm điểm</h3>
+        <p class="modal-desc">
             Bài: <strong><?= htmlspecialchars($assessment['title']) ?></strong><br>
             Hệ thống sẽ lưu tất cả điểm và cập nhật báo cáo attainment.
         </p>
-        <div class="confirm-stats-preview">
-            <div class="csp-item">
-                <span class="csp-val"><?= $totalStudents ?></span>
-                <span class="csp-lbl">Sinh viên</span>
+        <div class="modal-stats-preview">
+            <div class="msp-item">
+                <span class="msp-val"><?= $totalStudents ?></span>
+                <span class="msp-lbl">Sinh viên</span>
             </div>
-            <div class="csp-item">
-                <span class="csp-val"><?= $totalRubrics ?></span>
-                <span class="csp-lbl">Tiêu chí</span>
+            <div class="msp-item">
+                <span class="msp-val"><?= $totalRubrics ?></span>
+                <span class="msp-lbl">Tiêu chí</span>
             </div>
-            <div class="csp-item">
-                <span class="csp-val" id="modalGradedCount"><?= $fullyGradedCount ?></span>
-                <span class="csp-lbl">Hoàn thành</span>
+            <div class="msp-item">
+                <span class="msp-val" id="modalGradedCount"><?= $fullyGradedCount ?></span>
+                <span class="msp-lbl">Hoàn thành</span>
             </div>
         </div>
-        <div class="confirm-actions">
+        <div class="modal-actions">
             <button class="btn-modal-cancel" id="btnModalCancel">Huỷ bỏ</button>
             <button class="btn-modal-confirm" id="btnModalConfirm">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15">
@@ -320,15 +323,6 @@ window.getCsrfToken = function () {
         </div>
     </div>
 </div>
-
-<style>
-/* ── Feedback (expandable) + status idle */
-.feedback-wrap{width:100%;margin-top:6px;display:flex;flex-direction:column;gap:6px;align-items:stretch;}
-.btn-feedback-toggle{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--surface-2);background:rgba(51,65,85,.15);color:var(--text-muted);cursor:pointer;transition:all var(--transition);}
-.btn-feedback-toggle:hover{border-color:var(--accent);color:var(--accent);}
-.score-feedback{width:130px;max-width:130px;resize:none;overflow:hidden;border:1px solid var(--surface-2);background:var(--surface-0);color:var(--text-primary);border-radius:8px;padding:8px 10px;outline:none;opacity:0;max-height:0;transition:max-height .22s ease,opacity .18s ease;box-shadow:none;font-family:inherit;font-size:12px;line-height:1.4;}
-.score-feedback.open{opacity:1;}
-</style>
 
 <script>
 // feedback expand/collapse + textarea autosize
@@ -452,13 +446,13 @@ document.getElementById('btnSaveAll').addEventListener('click', async function()
 // ── Nút Xác nhận hoàn thành → Modal ──────────────────────────
 document.getElementById('btnConfirmAll').addEventListener('click', function() {
     updateOverallProgress();
-    document.getElementById('confirmOverlay').style.display = 'flex';
+    document.getElementById('confirmOverlay').classList.add('is-open');
 });
 document.getElementById('btnModalCancel').addEventListener('click', function() {
-    document.getElementById('confirmOverlay').style.display = 'none';
+    document.getElementById('confirmOverlay').classList.remove('is-open');
 });
 document.getElementById('confirmOverlay').addEventListener('click', function(e) {
-    if (e.target === this) this.style.display = 'none';
+    if (e.target === this) this.classList.remove('is-open');
 });
 document.getElementById('btnModalConfirm').addEventListener('click', async function() {
     this.disabled = true;
@@ -472,4 +466,531 @@ document.getElementById('btnModalConfirm').addEventListener('click', async funct
     // Redirect về dashboard thay vì reload
     setTimeout(() => { window.location.href = '/lecturer/dashboard'; }, 1000);
 });
+
+// ── Stats Tab Toggle (B6) ───────────────────────────────────
+const statsTab = document.getElementById('gradingStatsTab');
+const btnToggleStats = document.getElementById('btnToggleStats');
+if (btnToggleStats && statsTab) {
+    btnToggleStats.addEventListener('click', () => {
+        const isHidden = !statsTab.classList.contains('is-visible');
+        statsTab.classList.toggle('is-visible', isHidden);
+        btnToggleStats.classList.toggle('btn-secondary', !isHidden);
+        btnToggleStats.classList.toggle('btn-primary', isHidden);
+        if (isHidden) {
+            const assessmentId = document.getElementById('gradingTable')?.dataset.assessment;
+            if (assessmentId) {
+                fetch(`/lecturer/assessment/${assessmentId}/stats`, {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(r => r.json())
+                .then(data => { if (data.status === 'success') renderStatsTab(data); })
+                .catch(() => {});
+            }
+        }
+    });
+}
+function renderStatsTab(data) {
+    const distEl = document.getElementById('gradeDistributionBars');
+    if (distEl && data.distribution) {
+        const maxCount = Math.max(...data.distribution.map(d => d.count), 1);
+        distEl.innerHTML = data.distribution.map(d => {
+            const pct = Math.round((d.count / maxCount) * 100);
+            const color = d.grade_band.startsWith('A') ? '#10b981' :
+                          d.grade_band.startsWith('B') ? '#6366f1' :
+                          d.grade_band.startsWith('C') ? '#f59e0b' :
+                          d.grade_band.startsWith('D') ? '#f97316' : '#f43f5e';
+            return `<div class="gsp-dist-bar">
+                <div class="gsp-dist-fill" style="height:${pct}%;background:${color}" title="${d.count} SV"></div>
+                <span class="gsp-dist-label">${d.grade_band.replace(/\s\([^)]+\)/g,'')}</span>
+                <span class="gsp-dist-count">${d.count}</span>
+            </div>`;
+        }).join('');
+    }
+    const rowsEl = document.getElementById('statsCriteriaRows');
+    if (rowsEl && data.stats) {
+        rowsEl.innerHTML = data.stats.map(s => {
+            const pct = s.avg_pct ?? 0;
+            const color = pct >= 70 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#f43f5e';
+            return `<tr>
+                <td>${escHtml(s.criteria_name)}</td>
+                <td class="gsp-td--avg" style="color:${color}">${s.avg_score ?? '—'}</td>
+                <td>${s.min_score ?? '—'}</td>
+                <td>${s.max_score_val ?? '—'}</td>
+                <td>${parseInt(s.graded_count, 10) || 0}</td>
+            </tr>`;
+        }).join('');
+    }
+}
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 </script>
+
+<style>
+/* ── Toolbar ───────────────────────────────────────────────── */
+.grading-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}
+.toolbar-top {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.btn-sm {
+    font-size: 12px;
+    padding: 6px 14px;
+}
+.save-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.save-dots {
+    display: flex;
+    gap: 3px;
+}
+.save-dots span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    opacity: 0.4;
+    animation: save-pulse 2s ease-in-out infinite;
+}
+.save-dots span:nth-child(2) { animation-delay: 0.2s; }
+.save-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes save-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+.save-text {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.toolbar-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.keyboard-hint-inline {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.keyboard-hint-inline kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    border: 1px solid var(--surface-2);
+    border-radius: 4px;
+    background: var(--surface-0);
+    font-family: inherit;
+    font-size: 10px;
+}
+.btn-save-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.btn-save-all:hover { opacity: 0.85; }
+.btn-confirm-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--emerald);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.btn-confirm-all:hover { opacity: 0.85; }
+
+/* ── Stats Panel (B6) ──────────────────────────────────────── */
+.gsp-panel {
+    margin-top: 16px;
+    display: none;
+}
+.gsp-panel.is-visible { display: block; }
+.gsp-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.gsp-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.gsp-col {
+    flex: 1;
+    min-width: 320px;
+}
+.gsp-section-title {
+    font-family: Lexend Deca, sans-serif;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.gsp-dist-bars {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    height: 220px;
+}
+.gsp-dist-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.gsp-dist-fill {
+    width: 100%;
+    max-width: 48px;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+}
+.gsp-dist-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.gsp-dist-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+.gop-track--sm {
+    height: 10px;
+    background: var(--surface-2);
+    border-radius: 5px;
+    overflow: hidden;
+}
+.gop-track--sm .gop-fill {
+    height: 100%;
+    border-radius: 5px;
+}
+.gsp-gop-count {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.gsp-dist-text {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.gsp-criteria-section { }
+.gsp-table-wrap {
+    border: 1px solid var(--surface-2);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.gsp-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.gsp-table th {
+    padding: 10px 12px;
+    background: var(--surface-0);
+    text-align: left;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.gsp-table th:not(:first-child) {
+    text-align: center;
+}
+.gsp-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+.gsp-table td:not(:first-child) {
+    text-align: center;
+}
+.gsp-td--avg {
+    font-weight: 600;
+}
+
+/* ── Overall Progress ──────────────────────────────────────── */
+.grading-overall-progress {
+    margin-top: 16px;
+}
+.gop-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+/* ── Row Status Badges ─────────────────────────────────────── */
+.row-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+}
+.badge--done {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+.badge--partial {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+}
+.badge--pending {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+}
+
+/* ── Modal Overlay ─────────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.modal-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+.modal {
+    background: var(--surface-0);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    transform: translateY(12px) scale(0.97);
+    transition: transform 0.25s ease;
+}
+.modal-overlay.is-open .modal {
+    transform: translateY(0) scale(1);
+}
+.modal--confirm { text-align: center; }
+.modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+.modal-title {
+    font-family: Lexend Deca, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.modal-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+.modal-stats-preview {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+.msp-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.msp-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.msp-lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+.btn-modal-cancel {
+    padding: 8px 18px;
+    border: 1px solid var(--surface-2);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.btn-modal-cancel:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+.btn-modal-confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    background: var(--emerald);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.btn-modal-confirm:hover { opacity: 0.85; }
+
+/* ── Feedback (expandable) ──────────────────────────────────── */
+.feedback-wrap {
+    width: 100%;
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+}
+.btn-feedback-toggle {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--surface-2);
+    background: rgba(51, 65, 85, 0.15);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    align-self: flex-start;
+}
+.btn-feedback-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.btn-feedback-toggle.open {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.score-feedback {
+    width: 130px;
+    max-width: 130px;
+    resize: none;
+    overflow: hidden;
+    border: 1px solid var(--surface-2);
+    background: var(--surface-0);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 8px 10px;
+    outline: none;
+    opacity: 0;
+    max-height: 0;
+    transition: max-height 0.22s ease, opacity 0.18s ease;
+    box-shadow: none;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.score-feedback.open {
+    opacity: 1;
+}
+
+/* ── Banner overrides ───────────────────────────────────────── */
+.grading-complete-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+.gcb-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.gcb-body { flex: 1; }
+.gcb-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+.gcb-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+.gcb-back-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 7px;
+    font-size: 12px;
+    color: #10b981;
+    text-decoration: none;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+.gcb-back-btn:hover { background: rgba(16, 185, 129, 0.08); }
+.grading-progress-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(245, 158, 11, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+.grading-progress-banner svg {
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+</style>

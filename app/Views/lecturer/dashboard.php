@@ -23,7 +23,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
         <polyline points="20 6 9 17 4 12"/>
     </svg>
-    Tất cả bài kiểm tra đã được chấm điểm đầy đủ! 🎉
+    Tất cả bài kiểm tra đã được chấm điểm đầy đủ!
 </div>
 <?php endif; ?>
 
@@ -93,7 +93,7 @@
                 <span class="pending-pct"><?= $pct ?>%</span>
             </div>
             <a href="/lecturer/assessment/<?= $p['assessment_id'] ?>/grade"
-               class="btn btn-primary" style="padding:7px 18px;font-size:13px;white-space:nowrap">
+               class="btn btn-primary btn-grading">
                 Chấm điểm →
             </a>
         </div>
@@ -148,13 +148,13 @@
                                 display: true,
                                 labels: {
                                     font: { size: 12, weight: '500' },
-                                    color: '#f1f5f9',
+                                    color: '#64748b',
                                     usePointStyle: true,
                                     padding: 20,
                                 }
                             },
                             tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                backgroundColor: 'rgba(15, 23, 42, 0.85)',
                                 borderColor: 'rgba(51, 65, 85, 0.5)',
                                 borderWidth: 1,
                                 padding: 10,
@@ -205,62 +205,65 @@
 .alert-banner {
     display:flex; align-items:center; gap:10px;
     padding:12px 16px;
-    background:rgba(245,158,11,.1);
-    border:1px solid rgba(245,158,11,.3);
-    border-radius:var(--radius-md);
-    color:#fcd34d; font-size:13px; font-weight:500;
+    background:rgba(245,158,11,.08);
+    border:1px solid rgba(245,158,11,.2);
+    border-radius:10px;
+    color:#92400e; font-size:13px; font-weight:500;
 }
 .alert-banner--success {
-    background:rgba(16,185,129,.08);
-    border-color:rgba(16,185,129,.3);
-    color:var(--emerald);
+    background:rgba(16,185,129,.06);
+    border-color:rgba(16,185,129,.2);
+    color:#065f46;
 }
 
 .assignment-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
 .assignment-card {
-    background:var(--surface-0); border:1px solid var(--surface-2);
-    border-radius:var(--radius-lg); padding:18px;
+    background:#ffffff; border:1px solid #e2e8f0;
+    border-radius:14px; padding:18px;
     display:flex; flex-direction:column; gap:12px;
-    transition:border-color var(--transition);
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+    transition:border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.assignment-card:hover { border-color:var(--surface-3); }
+.assignment-card:hover { border-color:#cbd5e1; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
 .assignment-card-header { display:flex; justify-content:space-between; align-items:center; }
-.semester-tag { font-size:11px; color:var(--text-muted); }
-.assignment-title { font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:14px; color:var(--text-primary); line-height:1.4; }
+.semester-tag { font-size:11px; color:#94a3b8; }
+.assignment-title { font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:14px; color:#0f172a; line-height:1.4; }
 
 .assignment-stats { display:flex; gap:24px; }
 .astat { text-align:center; }
-.astat-val { font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:24px; color:var(--text-primary); }
-.astat-lbl { font-size:11px; color:var(--text-muted); }
+.astat-val { font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:24px; color:#0f172a; }
+.astat-lbl { font-size:11px; color:#94a3b8; }
 
 .assignment-actions { display:flex; gap:8px; flex-wrap:wrap; }
 .action-btn {
-    padding:6px 14px; border-radius:var(--radius-sm);
+    padding:6px 14px; border-radius:6px;
     font-size:12px; font-weight:600;
-    background:var(--surface-1); border:1px solid var(--surface-2);
-    color:var(--text-secondary); text-decoration:none;
-    transition:all var(--transition);
+    background:#f8fafc; border:1px solid #e2e8f0;
+    color:#64748b; text-decoration:none;
+    transition:all 0.2s ease;
 }
-.action-btn:hover { border-color:var(--accent); color:var(--text-primary); }
-.action-btn--primary { background:var(--accent-soft); border-color:rgba(99,102,241,.4); color:#a5b4fc; }
+.action-btn:hover { border-color:#4f46e5; color:#0f172a; }
+.action-btn--primary { background:rgba(79,70,229,0.08); border-color:rgba(79,70,229,0.2); color:#4f46e5; }
 
 .pending-list { display:flex; flex-direction:column; gap:12px; }
 .pending-item {
     display:flex; align-items:center; gap:16px;
     padding:14px 16px;
-    background:var(--surface-0); border:1px solid var(--surface-2);
-    border-radius:var(--radius-md);
-    transition:border-color var(--transition);
+    background:#ffffff; border:1px solid #e2e8f0;
+    border-radius:10px;
+    transition:border-color 0.2s ease;
 }
-.pending-item:hover { border-color:var(--surface-3); }
+.pending-item:hover { border-color:#cbd5e1; }
 .pending-info { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
 .pending-title-group { display:flex; flex-direction:column; gap:2px; min-width:0; }
-.pending-title { font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.pending-remaining { font-size:11px; color:var(--rose); }
+.pending-title { font-size:13px; font-weight:600; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pending-remaining { font-size:11px; color:#ef4444; }
 
 .pending-progress-group { display:flex; align-items:center; gap:10px; }
-.pending-count { font-size:12px; color:var(--text-secondary); white-space:nowrap; }
-.pending-pct { font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:13px; color:var(--text-secondary); min-width:35px; }
+.pending-count { font-size:12px; color:#64748b; white-space:nowrap; }
+.pending-pct { font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:13px; color:#64748b; min-width:35px; }
 
-.section-badge.urgent { background:rgba(244,63,94,.15); color:var(--rose); }
+.section-badge.urgent { background:rgba(239,68,68,0.1); color:#ef4444; }
+
+.btn-grading { padding:7px 18px; font-size:13px; white-space:nowrap; }
 </style>

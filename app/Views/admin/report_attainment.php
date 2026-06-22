@@ -415,10 +415,10 @@
     font-family: 'Lexend Deca', sans-serif;
     font-size: 20px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #0f172a;
     margin-bottom: 2px;
 }
-.page-sub { font-size: 13px; color: var(--text-muted); }
+.page-sub { font-size: 13px; color: #94a3b8; }
 
 .header-actions {
     display: flex;
@@ -446,7 +446,7 @@
     border-radius: 50%;
     flex-shrink: 0;
 }
-.legend-text { font-size: 11px; color: var(--text-muted); }
+.legend-text { font-size: 11px; color: #94a3b8; }
 .threshold-line {
     display: inline-block;
     width: 18px;
@@ -482,12 +482,12 @@
     font-family: 'Lexend Deca', sans-serif;
     font-weight: 700;
     font-size: 12px;
-    color: var(--accent);
+    color: #4f46e5;
     white-space: nowrap;
 }
 .bar-plo-desc {
     font-size: 11px;
-    color: var(--text-secondary);
+    color: #64748b;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -499,7 +499,7 @@
 .bar-track {
     position: relative;
     height: 10px;
-    background: var(--surface-2);
+    background: #e2e8f0;
     border-radius: 5px;
     overflow: visible;
     margin-bottom: 5px;
@@ -534,9 +534,9 @@
     font-size: 12px;
     white-space: nowrap;
 }
-.bar-pct-label--good { color: var(--emerald); }
-.bar-pct-label--mid  { color: var(--amber); }
-.bar-pct-label--low  { color: var(--rose); }
+.bar-pct-label--good { color: #10b981; }
+.bar-pct-label--mid  { color: #f59e0b; }
+.bar-pct-label--low  { color: #ef4444; }
 
 .bar-pass-rate {
     display: flex;
@@ -545,7 +545,7 @@
 }
 .pass-rate-label {
     font-size: 11px;
-    color: var(--text-muted);
+    color: #94a3b8;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -558,14 +558,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--text-secondary);
+    color: #64748b;
     font-size: 12px;
 }
 
 .score-display { font-weight: 700; font-size: 13px; }
-.score--good { color: var(--emerald); }
-.score--mid  { color: var(--amber); }
-.score--low  { color: var(--rose); }
+.score--good { color: #10b981; }
+.score--mid  { color: #f59e0b; }
+.score--low  { color: #ef4444; }
 
 .mini-progress-wrap {
     display: flex;
@@ -575,7 +575,7 @@
 .mini-progress-track {
     flex: 1;
     height: 5px;
-    background: var(--surface-2);
+    background: #e2e8f0;
     border-radius: 3px;
     overflow: hidden;
     min-width: 60px;
@@ -592,7 +592,7 @@
     font-family: 'Lexend Deca', sans-serif;
     font-weight: 700;
     font-size: 11px;
-    color: var(--text-secondary);
+    color: #64748b;
     white-space: nowrap;
     min-width: 38px;
     text-align: right;
@@ -604,13 +604,13 @@
     font-family: 'Lexend Deca', sans-serif;
     font-weight: 700;
     padding: 2px 7px;
-    background: var(--surface-2);
-    color: var(--text-secondary);
+    background: #e2e8f0;
+    color: #64748b;
     border-radius: 4px;
 }
 
 .text-center { text-align: center; }
-.text-muted { color: var(--text-muted); }
+.text-muted { color: #94a3b8; }
 .text-sm { font-size: 12px; }
 
 /* ── Top Students ──────────────────────────────────────────────── */
@@ -639,7 +639,7 @@
     font-family: 'Lexend Deca', sans-serif;
     font-weight: 700;
     font-size: 13px;
-    color: var(--text-muted);
+    color: #94a3b8;
 }
 
 .student-cell {
@@ -650,8 +650,8 @@
 .student-avatar-sm {
     width: 32px;
     height: 32px;
-    background: var(--accent-soft);
-    border: 2px solid var(--accent);
+    background: rgba(79,70,229,0.08);
+    border: 2px solid #4f46e5;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -659,10 +659,10 @@
     font-family: 'Lexend Deca', sans-serif;
     font-weight: 700;
     font-size: 12px;
-    color: var(--accent);
+    color: #4f46e5;
     flex-shrink: 0;
 }
-.student-full-name { font-weight: 600; font-size: 13px; color: var(--text-primary); }
+.student-full-name { font-weight: 600; font-size: 13px; color: #0f172a; }
 .student-username  { font-size: 11px; }
 
 .student-pct-cell {
@@ -674,7 +674,7 @@
 .student-bar-track {
     flex: 1;
     height: 6px;
-    background: var(--surface-2);
+    background: #e2e8f0;
     border-radius: 3px;
     overflow: hidden;
     min-width: 60px;
@@ -689,16 +689,16 @@
 
 /* Top 5 chart */
 .top5-chart-wrap {
-    background: var(--surface-0);
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-md);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
     padding: 16px;
 }
 .top5-chart-title {
     font-family: 'Lexend Deca', sans-serif;
     font-size: 12px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: .5px;
     margin-bottom: 14px;
@@ -719,8 +719,8 @@
 .top5-rank-badge {
     width: 18px;
     height: 18px;
-    background: var(--accent-soft);
-    color: var(--accent);
+    background: rgba(79,70,229,0.08);
+    color: #4f46e5;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -732,14 +732,14 @@
 }
 .top5-name {
     font-size: 11px;
-    color: var(--text-secondary);
+    color: #64748b;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .top5-bar-track {
     height: 8px;
-    background: var(--surface-2);
+    background: #e2e8f0;
     border-radius: 4px;
     overflow: hidden;
 }

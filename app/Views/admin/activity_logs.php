@@ -240,16 +240,16 @@
     font-family: 'Lexend Deca', sans-serif;
     font-size: 20px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #0f172a;
     margin-bottom: 2px;
 }
-.page-sub { font-size: 13px; color: var(--text-muted); }
+.page-sub { font-size: 13px; color: #94a3b8; }
 
 .table-info-bar {
     padding: 10px 14px;
     font-size: 12px;
-    color: var(--text-muted);
-    border-bottom: 1px solid rgba(51,65,85,.4);
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(226,232,240,0.8);
 }
 
 /* User cell */
@@ -263,16 +263,16 @@
     font-size: 12px;
     flex-shrink: 0;
 }
-.user-avatar--admin    { background: var(--accent-soft); color: var(--accent); }
-.user-avatar--lecturer { background: rgba(14,165,233,.12); color: var(--sky); }
-.user-avatar--student  { background: rgba(16,185,129,.12); color: var(--emerald); }
-.user-avatar--default  { background: var(--surface-2); color: var(--text-secondary); }
+.user-avatar--admin    { background: rgba(79,70,229,0.08); color: #4f46e5; }
+.user-avatar--lecturer { background: rgba(14,165,233,0.08); color: #0ea5e9; }
+.user-avatar--student  { background: rgba(16,185,129,0.08); color: #10b981; }
+.user-avatar--default  { background: #e2e8f0; color: #64748b; }
 
-.cell-primary { font-weight: 500; font-size: 13px; color: var(--text-primary); }
-.cell-sub { font-size: 11px; color: var(--text-muted); }
+.cell-primary { font-weight: 500; font-size: 13px; color: #0f172a; }
+.cell-sub { font-size: 11px; color: #94a3b8; }
 
 .text-mono { font-family: 'Lexend Deca', monospace; }
-.text-muted { color: var(--text-muted); }
+.text-muted { color: #94a3b8; }
 .text-sm { font-size: 12px; }
 
 @media (max-width: 768px) {

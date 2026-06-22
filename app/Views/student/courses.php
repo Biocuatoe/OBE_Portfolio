@@ -48,18 +48,18 @@
 <style>
 .courses-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
 .course-card {
-    background:var(--surface-0);
-    border:1px solid var(--surface-2);
-    border-radius:var(--radius-lg);
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
     padding:18px;
     display:flex; flex-direction:column; gap:10px;
-    transition:border-color var(--transition);
+    transition:border-color 0.2s ease;
 }
-.course-card:hover { border-color:var(--surface-3); }
+.course-card:hover { border-color:#cbd5e1; }
 .course-card-header { display:flex; justify-content:space-between; align-items:center; }
-.course-semester { font-size:11px; color:var(--text-muted); }
-.course-card-title { font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:14px; color:var(--text-primary); line-height:1.4; }
-.course-card-meta { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--text-secondary); }
+.course-semester { font-size:11px; color:#94a3b8; }
+.course-card-title { font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:14px; color:#0f172a; line-height:1.4; }
+.course-card-meta { display:flex; flex-direction:column; gap:4px; font-size:12px; color:#64748b; }
 .course-progress-section { margin-top:4px; }
-.course-progress-label { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-bottom:6px; }
+.course-progress-label { display:flex; justify-content:space-between; font-size:11px; color:#94a3b8; margin-bottom:6px; }
 </style>

@@ -421,18 +421,18 @@
     font-family: 'Lexend Deca', sans-serif;
     font-size: 20px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #0f172a;
     margin-bottom: 2px;
 }
-.page-sub { font-size: 13px; color: var(--text-muted); }
+.page-sub { font-size: 13px; color: #94a3b8; }
 .mt-8 { margin-top: 8px; }
 
-.cell-primary { font-weight: 500; font-size: 13px; color: var(--text-primary); }
-.cell-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-primary { font-weight: 500; font-size: 13px; color: #0f172a; }
+.cell-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Sortable table headers */
 .th-sort {
-    color: var(--text-secondary);
+    color: #64748b;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -442,16 +442,16 @@
     letter-spacing: .05em;
     font-weight: 600;
     white-space: nowrap;
-    transition: color var(--transition-fast);
+    transition: color 0.15s ease;
 }
-.th-sort:hover { color: var(--text-primary); }
-.th-sort--active { color: var(--accent); }
+.th-sort:hover { color: #0f172a; }
+.th-sort--active { color: #4f46e5; }
 
 .table-info-bar {
     padding: 10px 14px;
     font-size: 12px;
-    color: var(--text-muted);
-    border-bottom: 1px solid rgba(51,65,85,.4);
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(226,232,240,0.8);
 }
 
 /* Search bar */
@@ -462,49 +462,49 @@
     width: 30px; height: 30px;
     display: flex; align-items: center; justify-content: center;
     background: none;
-    border: 1px solid var(--surface-2);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #94a3b8;
     cursor: pointer;
-    transition: all var(--transition);
+    transition: all 0.2s ease;
     text-decoration: none;
 }
 .action-btn svg { width: 14px; height: 14px; }
-.action-btn--edit:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.action-btn--danger:hover { border-color: var(--rose); color: var(--rose); background: rgba(244,63,94,.1); }
-.action-btn--blue { color: var(--amber); }
-.action-btn--blue:hover { border-color: var(--amber); background: rgba(245,158,11,.1); }
+.action-btn--edit:hover { border-color: #4f46e5; color: #4f46e5; background: rgba(79,70,229,0.08); }
+.action-btn--danger:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.06); }
+.action-btn--blue { color: #f59e0b; }
+.action-btn--blue:hover { border-color: #f59e0b; background: rgba(245,158,11,0.06); }
 
 .text-center { text-align: center; }
 .text-right  { text-align: right; }
-.text-muted  { color: var(--text-muted); }
+.text-muted  { color: #94a3b8; }
 .text-sm     { font-size: 12px; }
 
 .confirm-icon {
     width: 52px; height: 52px;
-    background: rgba(245,158,11,.12);
+    background: rgba(245,158,11,0.08);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    color: var(--amber);
+    color: #f59e0b;
     margin: 0 auto 16px;
 }
 .confirm-icon svg { width: 24px; height: 24px; }
-.confirm-text { font-size: 15px; color: var(--text-primary); margin-bottom: 6px; }
-.confirm-sub { font-size: 12px; color: var(--text-muted); }
+.confirm-text { font-size: 15px; color: #0f172a; margin-bottom: 6px; }
+.confirm-sub { font-size: 12px; color: #94a3b8; }
 
 /* Buttons */
 .btn-spinner svg { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Form elements */
-.required { color: var(--rose); }
+.required { color: #ef4444; }
 .form-textarea { resize: vertical; min-height: 72px; }
 .field-error {
     display: none;
-    font-size: 11px; color: var(--rose);
+    font-size: 11px; color: #ef4444;
     margin-top: 4px;
 }
-.input--error { border-color: var(--rose) !important; }
+.input--error { border-color: #ef4444 !important; }
 
 @media (max-width: 640px) {
     .page-header { flex-direction: column; align-items: stretch; }

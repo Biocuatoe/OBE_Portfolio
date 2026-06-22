@@ -54,14 +54,14 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
 <!-- Main Dashboard Charts Section -->
 <div class="charts-row">
     <!-- Program Learning Outcomes Radar Chart -->
-    <div class="chart-card chart-card--radar">
+    <div class="chart-card chart-card--radar" style="padding: 24px;">
         <div class="chart-header">
             <div>
                 <h3 class="chart-title">Biểu đồ năng lực (PLO)</h3>
                 <p class="chart-subtitle">Mức độ đạt chuẩn đầu ra chương trình</p>
             </div>
             <div class="chart-legend">
-                <span class="legend-dot" style="background: #6366f1"></span>
+                <span class="legend-dot" style="background: #4f46e5"></span>
                 <span class="legend-text">Của bạn</span>
             </div>
         </div>
@@ -197,10 +197,10 @@ new Chart(radarCtx, {
             {
                 label: 'Mức đạt (%)',
                 data: ploScores,
-                backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                borderColor: '#6366f1',
+                backgroundColor: 'rgba(79, 70, 229, 0.12)',
+                borderColor: '#4f46e5',
                 borderWidth: 2.5,
-                pointBackgroundColor: '#6366f1',
+                pointBackgroundColor: '#4f46e5',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
                 pointRadius: 5,
@@ -210,8 +210,8 @@ new Chart(radarCtx, {
                 // Performance benchmark threshold at 70%
                 label: 'Ngưỡng đạt chuẩn (70%)',
                 data: ploLabels.map(() => 70),
-                backgroundColor: 'rgba(234, 179, 8, 0.05)',
-                borderColor: 'rgba(234, 179, 8, 0.5)',
+                backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                borderColor: '#f59e0b',
                 borderWidth: 1.5,
                 borderDash: [5, 4],
                 pointRadius: 0,
@@ -248,8 +248,8 @@ new Chart(radarCtx, {
                     font: { size: 10 },
                     backdropColor: 'transparent',
                 },
-                grid:     { color: 'rgba(148, 163, 184, 0.2)' },
-                angleLines:{ color: 'rgba(148, 163, 184, 0.15)' },
+                grid:     { color: 'rgba(226, 232, 240, 0.8)' },
+                angleLines:{ color: 'rgba(226, 232, 240, 0.6)' },
                 pointLabels: {
                     font: { family: 'Lexend Deca', size: 13, weight: '600' },
                     color: '#334155',

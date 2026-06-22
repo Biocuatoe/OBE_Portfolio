@@ -156,11 +156,11 @@ class ScoreController extends BaseController
         }
 
         $programId = (int)$this->db->fetchOne(
-            "SELECT p.id FROM programs p 
-             JOIN enrollments e ON 1=1 
-             JOIN course_assignments ca ON ca.id = e.assignment_id
-             JOIN courses c ON c.id = ca.course_id
-             WHERE e.student_id = ? AND c.program_id = p.id
+            "SELECT p.id FROM programs p
+             JOIN courses c ON c.program_id = p.id
+             JOIN course_assignments ca ON ca.course_id = c.id
+             JOIN enrollments e ON e.assignment_id = ca.id
+             WHERE e.student_id = ?
              LIMIT 1",
             [$studentId]
         )['id'];
