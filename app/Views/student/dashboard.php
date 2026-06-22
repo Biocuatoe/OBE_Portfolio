@@ -259,7 +259,7 @@ new Chart(radarCtx, {
     },
 });
 
-// ── Animate progress bars on scroll ──────────────────────────────
+// ── Animate dashboard progress indicators on scroll ─────────────
 const observer = new IntersectionObserver(entries => {
     entries.forEach(e => {
         if (e.isIntersecting) {
