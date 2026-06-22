@@ -69,8 +69,12 @@ $router->post('/admin/plo/:id/delete',                  [AdminController::class,
 $router->get('/admin/courses',                          [AdminController::class, 'courses'],          'admin.courses');
 $router->post('/admin/courses',                         [AdminController::class, 'storeCourse'],      'admin.courses.store');
 $router->get('/admin/course/:course_id/mapping',        [AdminController::class, 'mappingMatrix'],    'admin.mapping');
-$router->get('/admin/users',                            [AdminController::class, 'users'],            'admin.users');
-$router->post('/admin/users',                           [AdminController::class, 'storeUser'],        'admin.users.store');
+$router->get('/admin/users',                            [AdminController::class, 'users'],             'admin.users');
+$router->post('/admin/user/store',                       [AdminController::class, 'storeUser'],         'admin.users.store');
+$router->post('/admin/user/:id/update',                  [AdminController::class, 'updateUser'],        'admin.users.update');
+$router->post('/admin/user/:id/toggle',                  [AdminController::class, 'toggleUserStatus'], 'admin.users.toggle');
+$router->get('/admin/activity-logs',                     [AdminController::class, 'activityLogs'],      'admin.activity_logs');
+$router->post('/admin/activity-log/:id/delete',          [AdminController::class, 'deleteActivityLog'], 'admin.activity_logs.delete');
 $router->get('/admin/report/attainment/:program_id',    [AdminController::class, 'reportAttainment'], 'admin.report');
 
 // ── Lecturer routes ────────────────────────────────────────────────
