@@ -184,7 +184,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
 </div>
 
 <script>
-// ── PLO Radar Chart ───────────────────────────────────────────────
+// ── Student PLO Radar Chart Visualization ────────────────────────
 const ploLabels  = <?= json_encode(array_column($plo_data, 'code'), JSON_UNESCAPED_UNICODE) ?>;
 const ploScores  = <?= json_encode(array_map(fn($p) => (float)$p['achieved_percentage'], $plo_data)) ?>;
 
