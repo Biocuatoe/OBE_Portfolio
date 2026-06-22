@@ -207,7 +207,7 @@ new Chart(radarCtx, {
                 pointHoverRadius: 7,
             },
             {
-                // Đường chuẩn 70%
+                // Performance benchmark threshold at 70%
                 label: 'Ngưỡng đạt chuẩn (70%)',
                 data: ploLabels.map(() => 70),
                 backgroundColor: 'rgba(234, 179, 8, 0.05)',
