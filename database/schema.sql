@@ -1,6 +1,6 @@
 -- ================================================================
 -- OBE & E-PORTFOLIO SYSTEM - DATABASE SCHEMA
--- Version: 2.0 | Standard: 3NF | Engine: InnoDB
+-- Version: 2.0 | Standard: 3NF | Engine: InnoDB/MyPHPAdmin
 -- ================================================================
 
 SET NAMES utf8mb4;
@@ -165,9 +165,12 @@ CREATE TABLE `rubrics` (
     `order_index`    TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `created_at`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
+    KEY `idx_rubrics_assessment` (`assessment_id`),
+    KEY `idx_rubrics_clo` (`clo_id`),
     FOREIGN KEY (`assessment_id`) REFERENCES `assessments`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`clo_id`)        REFERENCES `clos`(`id`)        ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- ----------------------------------------------------------------
 -- 11. STUDENT SCORES (Điểm sinh viên theo từng tiêu chí)
@@ -181,9 +184,11 @@ CREATE TABLE `student_scores` (
     `graded_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_student_rubric` (`student_id`, `rubric_id`),
+    KEY `idx_student_scores_rubric` (`rubric_id`),
     FOREIGN KEY (`student_id`) REFERENCES `users`(`id`)    ON DELETE CASCADE,
     FOREIGN KEY (`rubric_id`)  REFERENCES `rubrics`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- ----------------------------------------------------------------
 -- 12. CLO ATTAINMENT (Mức độ đạt CLO - được tính tự động)

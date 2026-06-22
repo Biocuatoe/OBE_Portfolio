@@ -1,6 +1,13 @@
 <?php /* app/Views/lecturer/grading.php */
-$pageTitle = 'Chấm điểm — ' . htmlspecialchars($assessment['title']);
+$assessment = $assessment ?? []; // for IDE static analysis
+$students   = $students ?? [];
+$rubrics    = $rubrics ?? [];
+$stats      = $stats ?? [];
+$csrf_token = $csrf_token ?? '';
+
+$pageTitle = 'Chấm điểm — ' . htmlspecialchars($assessment['title'] ?? '');
 $extraJs   = ['/js/grade_sync.js'];
+
 
 // Đếm SV có ÍT NHẤT 1 điểm
 $gradedCount = 0;
@@ -90,8 +97,48 @@ $isFullyComplete  = ($fullyGradedCount === $totalStudents && $totalStudents > 0 
     </div>
 </div>
 
-<!-- Toolbar -->
-<div class="grading-toolbar">
+<!-- Stats UI (B6) -->
+<div id="gradingStatsTab" style="margin-top:16px;display:none;">
+    <div class="grading-stats-panel">
+        <div style="display:flex;gap:16px;align-items:flex-start;">
+            <div style="flex:1;min-width:360px;">
+                <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Phân bố điểm</h3>
+                <div id="gradeDistributionBars" style="display:flex;gap:10px;align-items:flex-end;height:220px;">
+                </div>
+            </div>
+            <div style="flex:1;min-width:320px;">
+                <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Hoàn thành chấm điểm</h3>
+                <div class="gop-track" style="height:10px;background:var(--surface-2);">
+                    <div class="gop-fill" id="statsGopFill" style="width:0%;height:10px;"></div>
+                </div>
+                <div id="statsGopCount" style="margin-top:8px;color:var(--text-secondary);font-size:12px;">—</div>
+                <div id="statsDistributionText" style="margin-top:14px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text-secondary);"></div>
+            </div>
+        </div>
+
+        <div style="margin-top:18px;">
+            <h3 style="font-family:Lexend Deca, sans-serif;margin-bottom:10px;">Bảng stats theo criteria</h3>
+            <div class="table-scroll" style="border:1px solid var(--surface-2);border-radius:10px;overflow:hidden;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                    <tr>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:left;font-size:11px;color:var(--text-muted);">Criteria</th>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Avg</th>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Min</th>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Max</th>
+                        <th style="padding:10px 12px;background:var(--surface-0);text-align:center;font-size:11px;color:var(--text-muted);">Đã chấm</th>
+                    </tr>
+                    </thead>
+                    <tbody id="statsCriteriaRows">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grading-toolbar" style="margin-top:16px;">
+
     <div class="save-status-bar" id="saveStatusBar">
         <div class="save-dots"><span></span><span></span><span></span></div>
         <span class="save-text" id="saveText">Tất cả thay đổi đã được lưu</span>
@@ -187,8 +234,23 @@ $isFullyComplete  = ($fullyGradedCount === $totalStudents && $totalStudents > 0 
                                 data-assessment="<?= $assessment['id'] ?>"
                                 value="<?= $currentScore !== null ? number_format((float)$currentScore, 1) : '' ?>"
                                 min="0" max="<?= $r['max_score'] ?>" step="0.5" placeholder="—">
+
                             <div class="score-indicator <?= $currentScore !== null ? 'saved' : '' ?>"
                                  id="indicator-<?= $student['id'] ?>-<?= $r['id'] ?>"></div>
+
+<!-- Expandable feedback -->
+                            <?php $currentFeedback = $student['scores'][$r['id']]['feedback'] ?? ''; ?>
+                            <div class="feedback-wrap">
+                                <button type="button" class="btn-feedback-toggle"
+                                        data-student="<?= $student['id'] ?>" data-rubric="<?= $r['id'] ?>">
+                                    Feedback <?= $currentFeedback ? '✓' : '' ?>
+                                </button>
+                                <textarea class="score-feedback"
+                                          data-student="<?= $student['id'] ?>"
+                                          data-rubric="<?= $r['id'] ?>"
+                                          rows="1"
+                                          placeholder="Ghi chú (tuỳ chọn)..."><?= htmlspecialchars((string)$currentFeedback) ?></textarea>
+                            </div>
                         </div>
                     </td>
                     <?php endforeach; ?>
@@ -216,6 +278,13 @@ $isFullyComplete  = ($fullyGradedCount === $totalStudents && $totalStudents > 0 
 </div>
 
 <meta name="csrf-token" content="<?= htmlspecialchars($csrf_token) ?>">
+<script>
+// expose csrf token for grade_sync.js
+window.getCsrfToken = function () {
+    const el = document.querySelector('meta[name="csrf-token"]');
+    return el ? el.getAttribute('content') : '';
+};
+</script>
 
 <!-- Confirm Modal -->
 <div class="confirm-overlay" id="confirmOverlay" style="display:none">
@@ -253,120 +322,60 @@ $isFullyComplete  = ($fullyGradedCount === $totalStudents && $totalStudents > 0 
 </div>
 
 <style>
-/* ── Status Banners ──────────────────────────────────────────── */
-.grading-complete-banner {
-    display:flex; align-items:center; gap:14px;
-    padding:14px 20px;
-    background:rgba(16,185,129,.1);
-    border:1px solid rgba(16,185,129,.35);
-    border-radius:var(--radius-lg);
-}
-.gcb-icon {
-    width:40px; height:40px; flex-shrink:0;
-    background:rgba(16,185,129,.2);
-    border:2px solid var(--emerald);
-    border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    font-size:18px; color:var(--emerald);
-}
-.gcb-body { flex:1; }
-.gcb-title { font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:14px; color:var(--emerald); }
-.gcb-desc  { font-size:12px; color:var(--text-secondary); margin-top:3px; }
-.gcb-back-btn {
-    padding:7px 16px; border-radius:var(--radius-sm);
-    background:var(--emerald); color:white;
-    font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:13px;
-    text-decoration:none; white-space:nowrap;
-    transition:background var(--transition);
-}
-.gcb-back-btn:hover { background:#059669; }
-
-.grading-progress-banner {
-    display:flex; align-items:center; gap:8px;
-    padding:10px 16px;
-    background:rgba(245,158,11,.08);
-    border:1px solid rgba(245,158,11,.25);
-    border-radius:var(--radius-md);
-    font-size:13px; color:var(--amber);
-}
-
-/* ── Toolbar ─────────────────────────────────────────────────── */
-.grading-toolbar {
-    display:flex; align-items:center; justify-content:space-between;
-    background:var(--surface-1); border:1px solid var(--surface-2);
-    border-radius:var(--radius-md); padding:10px 16px; gap:12px;
-}
-.toolbar-actions { display:flex; align-items:center; gap:10px; }
-.keyboard-hint-inline { font-size:11px; color:var(--text-muted); }
-
-.btn-save-all {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:8px 16px; background:var(--surface-2);
-    border:1px solid var(--surface-3); border-radius:var(--radius-sm);
-    color:var(--text-secondary);
-    font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:13px;
-    cursor:pointer; transition:all var(--transition);
-}
-.btn-save-all:hover { background:var(--surface-3); color:var(--text-primary); }
-
-.btn-confirm-all {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:8px 18px; background:var(--emerald); border:none;
-    border-radius:var(--radius-sm); color:white;
-    font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:13px;
-    cursor:pointer; transition:all var(--transition);
-    box-shadow:0 2px 12px rgba(16,185,129,.3);
-}
-.btn-confirm-all:hover { background:#059669; }
-
-/* ── Overall Progress ────────────────────────────────────────── */
-.grading-overall-progress {
-    background:var(--surface-1); border:1px solid var(--surface-2);
-    border-radius:var(--radius-md); padding:12px 16px;
-}
-.gop-label {
-    display:flex; justify-content:space-between;
-    font-size:12px; color:var(--text-secondary); margin-bottom:8px; font-weight:500;
-}
-.gop-track { height:8px; background:var(--surface-2); border-radius:4px; overflow:hidden; }
-.gop-fill {
-    height:100%; background:linear-gradient(90deg,var(--emerald),#34d399);
-    border-radius:4px; transition:width .6s cubic-bezier(.16,1,.3,1);
-}
-
-/* ── Row status ──────────────────────────────────────────────── */
-.row-status-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap; }
-.badge--done    { background:rgba(16,185,129,.15); color:var(--emerald); }
-.badge--partial { background:rgba(245,158,11,.15); color:var(--amber); }
-.badge--pending { background:var(--surface-2);     color:var(--text-muted); }
-.th-status,.td-status { min-width:110px; text-align:center; padding:8px; }
-
-/* ── Header extras ───────────────────────────────────────────── */
-.grading-meta-top { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
-.published-badge { font-size:11px; padding:2px 10px; border-radius:20px; background:rgba(16,185,129,.15); color:var(--emerald); font-weight:700; }
-.draft-badge     { font-size:11px; padding:2px 10px; border-radius:20px; background:rgba(245,158,11,.15); color:var(--amber);   font-weight:700; }
-.gs-count { font-size:10px; color:var(--text-muted); margin-top:4px; text-align:right; }
-
-/* ── Confirm Modal ───────────────────────────────────────────── */
-.confirm-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; animation:fadeIn .2s ease; }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-.confirm-modal { background:var(--surface-1); border:1px solid var(--surface-2); border-radius:var(--radius-xl); padding:32px; max-width:420px; width:90%; text-align:center; box-shadow:0 24px 80px rgba(0,0,0,.5); animation:slideUp .25s cubic-bezier(.16,1,.3,1); }
-@keyframes slideUp { from{transform:translateY(24px);opacity:0} to{transform:translateY(0);opacity:1} }
-.confirm-icon { width:56px; height:56px; background:rgba(16,185,129,.15); border:2px solid var(--emerald); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--emerald); margin:0 auto 16px; }
-.confirm-title { font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:18px; color:var(--text-primary); margin-bottom:10px; }
-.confirm-desc { font-size:13px; color:var(--text-secondary); line-height:1.6; margin-bottom:20px; }
-.confirm-stats-preview { display:flex; justify-content:center; gap:24px; padding:16px; margin-bottom:24px; background:var(--surface-0); border-radius:var(--radius-md); }
-.csp-item { text-align:center; }
-.csp-val { font-family:'Lexend Deca',sans-serif; font-weight:800; font-size:24px; color:var(--text-primary); display:block; }
-.csp-lbl { font-size:11px; color:var(--text-muted); }
-.confirm-actions { display:flex; gap:10px; }
-.btn-modal-cancel { flex:1; padding:10px; background:var(--surface-2); border:none; border-radius:var(--radius-sm); color:var(--text-secondary); font-family:'Lexend Deca',sans-serif; font-weight:600; font-size:14px; cursor:pointer; transition:all var(--transition); }
-.btn-modal-cancel:hover { background:var(--surface-3); }
-.btn-modal-confirm { flex:2; padding:10px; background:var(--emerald); border:none; border-radius:var(--radius-sm); color:white; font-family:'Lexend Deca',sans-serif; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all var(--transition); }
-.btn-modal-confirm:hover { background:#059669; }
+/* ── Feedback (expandable) + status idle */
+.feedback-wrap{width:100%;margin-top:6px;display:flex;flex-direction:column;gap:6px;align-items:stretch;}
+.btn-feedback-toggle{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--surface-2);background:rgba(51,65,85,.15);color:var(--text-muted);cursor:pointer;transition:all var(--transition);}
+.btn-feedback-toggle:hover{border-color:var(--accent);color:var(--accent);}
+.score-feedback{width:130px;max-width:130px;resize:none;overflow:hidden;border:1px solid var(--surface-2);background:var(--surface-0);color:var(--text-primary);border-radius:8px;padding:8px 10px;outline:none;opacity:0;max-height:0;transition:max-height .22s ease,opacity .18s ease;box-shadow:none;font-family:inherit;font-size:12px;line-height:1.4;}
+.score-feedback.open{opacity:1;}
 </style>
 
 <script>
+// feedback expand/collapse + textarea autosize
+(function initFeedbackUI(){
+    const table = document.getElementById('gradingTable');
+    if (!table) return;
+
+    function autosize(el){
+        el.style.height = 'auto';
+        el.style.height = (el.scrollHeight) + 'px';
+    }
+
+    table.querySelectorAll('.btn-feedback-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sid = btn.dataset.student;
+            const rid = btn.dataset.rubric;
+            const ta = table.querySelector(`textarea.score-feedback[data-student="${sid}"][data-rubric="${rid}"]`);
+            if (!ta) return;
+            const isOpen = ta.classList.toggle('open');
+            btn.classList.toggle('open', isOpen);
+            ta.style.maxHeight = isOpen ? '220px' : '0px';
+            ta.style.opacity = isOpen ? '1' : '0';
+            if (isOpen){
+                autosize(ta);
+                ta.focus();
+            }
+        });
+    });
+
+    table.querySelectorAll('.score-feedback').forEach(ta => {
+        autosize(ta);
+        ta.addEventListener('input', () => autosize(ta));
+
+        // mark dirty & auto-save on debounce via triggering input on related score-input? 
+        // grade_sync.js listens only score-input; feedback is saved when score-input saves.
+        // here we just mark dirty state by toggling corresponding score-input.
+        ta.addEventListener('input', () => {
+            const sid = ta.dataset.student;
+            const rid = ta.dataset.rubric;
+            const inp = table.querySelector(`input.score-input[data-student="${sid}"][data-rubric="${rid}"]`);
+            if (inp) {
+                inp.classList.add('dirty');
+            }
+        });
+    });
+})();
+
 // ── Cập nhật trạng thái hàng realtime ─────────────────────────
 function updateRowStatus(studentId) {
     const row    = document.querySelector(`tr[data-student-id="${studentId}"]`);
@@ -374,6 +383,7 @@ function updateRowStatus(studentId) {
     const inputs = [...row.querySelectorAll('.score-input')];
     const filled = inputs.filter(i => i.value !== '').length;
     const total  = inputs.length;
+
     const badge  = document.getElementById(`status-${studentId}`);
     const totalEl= document.getElementById(`total-${studentId}`);
 
