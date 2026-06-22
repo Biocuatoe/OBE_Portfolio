@@ -107,7 +107,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
     </div>
 </div>
 
-<!-- CLO Breakdown by Course -->
+<!-- Course Learning Outcomes Breakdown -->
 <?php foreach ($clo_data_course as $courseId => $item): ?>
 <div class="section-card">
     <div class="section-header">
