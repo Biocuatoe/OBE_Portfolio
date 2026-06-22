@@ -136,7 +136,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
 </div>
 <?php endforeach; ?>
 
-<!-- Recent Activity -->
+<!-- Recent Student Assessment Activity -->
 <div class="section-card">
     <div class="section-header">
         <h3 class="section-title">Hoạt động chấm điểm gần đây</h3>
