@@ -2,7 +2,7 @@
 $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
 ?>
 
-<!-- Stats Overview -->
+<!-- Student Statistics Overview -->
 <div class="stats-grid">
     <div class="stat-card stat-card--primary">
         <div class="stat-icon">
@@ -51,9 +51,9 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
     </div>
 </div>
 
-<!-- Main Charts Row -->
+<!-- Main Dashboard Charts Section -->
 <div class="charts-row">
-    <!-- PLO Radar Chart -->
+    <!-- Program Learning Outcomes Radar Chart -->
     <div class="chart-card chart-card--radar">
         <div class="chart-header">
             <div>
@@ -70,7 +70,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
         </div>
     </div>
 
-    <!-- PLO Bar Chart -->
+    <!-- PLO Performance Bar Chart -->
     <div class="chart-card chart-card--bar">
         <div class="chart-header">
             <div>
@@ -107,7 +107,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
     </div>
 </div>
 
-<!-- CLO Breakdown by Course -->
+<!-- Course Learning Outcomes Breakdown -->
 <?php foreach ($clo_data_course as $courseId => $item): ?>
 <div class="section-card">
     <div class="section-header">
@@ -136,7 +136,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
 </div>
 <?php endforeach; ?>
 
-<!-- Recent Activity -->
+<!-- Recent Student Assessment Activity -->
 <div class="section-card">
     <div class="section-header">
         <h3 class="section-title">Hoạt động chấm điểm gần đây</h3>
@@ -184,7 +184,7 @@ $pageTitle = 'E-Portfolio — ' . htmlspecialchars($student_name);
 </div>
 
 <script>
-// ── PLO Radar Chart ───────────────────────────────────────────────
+// ── Student PLO Radar Chart Visualization ────────────────────────
 const ploLabels  = <?= json_encode(array_column($plo_data, 'code'), JSON_UNESCAPED_UNICODE) ?>;
 const ploScores  = <?= json_encode(array_map(fn($p) => (float)$p['achieved_percentage'], $plo_data)) ?>;
 
@@ -207,7 +207,7 @@ new Chart(radarCtx, {
                 pointHoverRadius: 7,
             },
             {
-                // Đường chuẩn 70%
+                // Performance benchmark threshold at 70%
                 label: 'Ngưỡng đạt chuẩn (70%)',
                 data: ploLabels.map(() => 70),
                 backgroundColor: 'rgba(234, 179, 8, 0.05)',
@@ -259,7 +259,7 @@ new Chart(radarCtx, {
     },
 });
 
-// ── Animate progress bars on scroll ──────────────────────────────
+// ── Animate dashboard progress indicators on scroll ─────────────
 const observer = new IntersectionObserver(entries => {
     entries.forEach(e => {
         if (e.isIntersecting) {

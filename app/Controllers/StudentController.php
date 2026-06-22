@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../core/BaseController.php';
 require_once __DIR__ . '/../Models/ScoreModel.php';
 
 /**
- * StudentController - E-Portfolio Dashboard cho sinh viên
+ * StudentController - Handles Student Portal and E-Portfolio features
  */
 class StudentController extends BaseController
 {
