@@ -118,7 +118,7 @@ abstract class BaseController
     {
         $token = $_POST['_token'] ?? $this->jsonBody()['_token'] ?? '';
         if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
-            $this->json(['error' => 'CSRF token không hợp lệ.'], 419);
+            throw new \JsonException('CSRF token không hợp lệ.');
         }
     }
 }

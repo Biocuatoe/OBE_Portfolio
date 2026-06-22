@@ -23,15 +23,31 @@ class AuthController extends BaseController
         if (isset($_SESSION['user_id'])) {
             $this->redirect($this->auth->getRedirectPath($_SESSION['user_role']));
         }
-        $this->view('auth/login', ['csrf_token' => $this->csrfToken()], 'auth');
+        $this->view('auth/login', ['csrf_token' => $this->csrfToken()], 'minimal');
     }
 
     public function processLogin(array $params): void
     {
-        $this->verifyCsrf();
-
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
+
+        if ($username === '' || $password === '') {
+            $this->view('auth/login', [
+                'error'      => 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.',
+                'csrf_token' => $this->csrfToken(),
+            ], 'minimal');
+            return;
+        }
+
+        try {
+            $this->verifyCsrf();
+        } catch (\JsonException $e) {
+            $this->view('auth/login', [
+                'error'      => 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.',
+                'csrf_token' => $this->csrfToken(),
+            ], 'minimal');
+            return;
+        }
 
         try {
             $user = $this->auth->attempt($username, $password);
@@ -41,7 +57,7 @@ class AuthController extends BaseController
             $this->view('auth/login', [
                 'error'      => $e->getMessage(),
                 'csrf_token' => $this->csrfToken(),
-            ], 'auth');
+            ], 'minimal');
         }
     }
 
