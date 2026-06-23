@@ -73,6 +73,13 @@ $router->post('/admin/plo/:id/delete',            [AdminController::class, 'dele
 $router->get('/admin/courses',                          [AdminController::class, 'courses'],          'admin.courses');
 $router->post('/admin/courses',                         [AdminController::class, 'storeCourse'],      'admin.courses.store');
 $router->post('/admin/course/:id/update',              [AdminController::class, 'updateCourse'],     'admin.courses.update');
+$router->post('/admin/course/:id/delete',              [AdminController::class, 'deleteCourse'],     'admin.courses.delete');
+$router->post('/admin/courses/assign-lecturer',        [AdminController::class, 'assignLecturer'],   'admin.courses.assignLecturer');
+$router->post('/admin/courses/enroll-student',         [AdminController::class, 'enrollStudent'],   'admin.courses.enrollStudent');
+$router->post('/admin/courses/unenroll-student',       [AdminController::class, 'unenrollStudent'],'admin.courses.unenrollStudent');
+$router->get('/admin/courses/:id/enrolled',           [AdminController::class, 'getEnrolledStudents'], 'admin.courses.enrolled');
+$router->get('/admin/courses/available-students',      [AdminController::class, 'getAvailableStudents'], 'admin.courses.availableStudents');
+$router->get('/admin/course/:id/matrix',              [AdminController::class, 'matrix'],           'admin.course.matrix');
 $router->get('/admin/course/:course_id/mapping',        [AdminController::class, 'mappingMatrix'],    'admin.mapping');
 $router->get('/admin/users',                            [AdminController::class, 'users'],             'admin.users');
 $router->post('/admin/user/store',                       [AdminController::class, 'storeUser'],         'admin.users.store');

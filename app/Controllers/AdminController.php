@@ -409,28 +409,33 @@ class AdminController extends BaseController
     {
         $this->requireAuth('admin');
 
-        $courses = $this->db->fetchAll(
-            "SELECT c.*,
-                p.name AS program_name,
-                p.code AS program_code,
-                COUNT(DISTINCT ca.id)        AS assignment_count,
-                COUNT(DISTINCT e.student_id) AS student_count,
-                COUNT(DISTINCT ca.lecturer_id) AS lecturer_count
-             FROM courses c
-             JOIN programs p ON p.id = c.program_id
-             LEFT JOIN course_assignments ca ON ca.course_id = c.id
-             LEFT JOIN enrollments e ON e.assignment_id = ca.id
-             GROUP BY c.id
-             ORDER BY c.code"
-        );
+        // Get programs for dropdown
+        $programs = $this->db->fetchAll("SELECT id, code, name FROM programs ORDER BY code");
 
-        $programs  = $this->db->fetchAll("SELECT id, code, name FROM programs ORDER BY name");
-        $lecturers = $this->db->fetchAll("SELECT id, full_name FROM users WHERE role='lecturer' ORDER BY full_name");
+        // Get courses with program name, lecturer name, semester, and student count
+        $courses = $this->db->fetchAll("
+            SELECT
+                c.id, c.code, c.name, c.credits, c.program_id, c.description,
+                p.code AS program_code, p.name AS program_name,
+                ca.semester,
+                u.full_name AS lecturer_name,
+                (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS student_count
+            FROM courses c
+            LEFT JOIN programs p ON p.id = c.program_id
+            LEFT JOIN course_assignments ca ON ca.course_id = c.id
+            LEFT JOIN users u ON u.id = ca.lecturer_id
+            ORDER BY c.code ASC
+        ");
+
+        // Get lecturers for assign modal
+        $lecturers = $this->db->fetchAll(
+            "SELECT id, full_name, email FROM users WHERE role = 'lecturer' ORDER BY full_name"
+        );
 
         $this->view('admin/courses', [
             'pageTitle'  => 'Quản lý môn học',
-            'courses'    => $courses,
             'programs'   => $programs,
+            'courses'    => $courses,
             'lecturers'  => $lecturers,
             'csrf_token' => $this->csrfToken(),
         ]);
@@ -439,155 +444,56 @@ class AdminController extends BaseController
     public function storeCourse(array $params): void
     {
         $this->requireAuth('admin');
-        $this->verifyCsrf();
+        header('Content-Type: application/json');
 
         $body = $this->jsonBody();
-        $data = [
-            'program_id'  => (int)($body['program_id'] ?? 0),
-            'code'        => strtoupper(trim($body['code'] ?? '')),
-            'name'        => trim($body['name'] ?? ''),
-            'credits'     => (int)($body['credits'] ?? 3),
-            'description' => trim($body['description'] ?? ''),
-        ];
+        $code        = trim($body['code'] ?? '');
+        $name        = trim($body['name'] ?? '');
+        $credits     = (int)($body['credits'] ?? 0);
+        $programId   = (int)($body['program_id'] ?? 0);
+        $description = trim($body['description'] ?? '');
 
-        // Validation
         $errors = [];
-        if ($data['program_id'] === 0) {
-            $errors['program_id'] = 'Vui lòng chọn chương trình đào tạo.';
-        } else {
-            // Verify program exists
-            $programExists = $this->db->fetchOne("SELECT id FROM programs WHERE id = ?", [$data['program_id']]);
-            if (!$programExists) {
-                $errors['program_id'] = 'Chương trình đào tạo không tồn tại.';
-            }
-        }
-        if ($data['code'] === '') {
-            $errors['code'] = 'Mã môn học không được để trống.';
-        } elseif (!preg_match('/^[A-Z]{2,6}[0-9]{2,4}[A-Z]?$/i', $data['code'])) {
-            $errors['code'] = 'Mã môn học không hợp lệ (VD: ITEC2201).';
-        }
-        if ($data['name'] === '') {
-            $errors['name'] = 'Tên môn học không được để trống.';
-        }
-        if ($data['credits'] < 1 || $data['credits'] > 10) {
-            $errors['credits'] = 'Số tín chỉ phải từ 1 đến 10.';
-        }
+        if (!$code)         $errors['code']        = 'Mã môn học không được để trống.';
+        if (!$name)         $errors['name']        = 'Tên môn học không được để trống.';
+        if ($credits < 1)   $errors['credits']     = 'Số tín chỉ phải >= 1.';
+        if ($programId < 1) $errors['program_id'] = 'Chương trình đào tạo không hợp lệ.';
 
-        if (!empty($errors)) {
-            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
-        }
+        if ($errors) { $this->json(['status' => 'error', 'error' => 'Validation failed', 'fields' => $errors], 422); return; }
 
-        // Check duplicate code
-        $existing = $this->db->fetchOne(
-            "SELECT id FROM courses WHERE code = ? LIMIT 1",
-            [$data['code']]
+        $this->db->query(
+            "INSERT INTO courses (program_id, code, name, credits, description, created_at, updated_at) VALUES (?,?,?,?,?,NOW(),NOW())",
+            [$programId, $code, $name, $credits, $description]
         );
-        if ($existing) {
-            $this->json([
-                'error'  => 'Mã môn học đã tồn tại.',
-                'fields' => ['code' => 'Mã môn học đã tồn tại.'],
-            ], 409);
-        }
-
-        $this->db->beginTransaction();
-        try {
-            $this->db->query(
-                "INSERT INTO courses (program_id, code, name, credits, description) VALUES (?,?,?,?,?)",
-                array_values($data)
-            );
-            $courseId = (int)$this->db->lastInsertId();
-
-            if (!empty($body['lecturer_id']) && !empty($body['semester'])) {
-                // Verify lecturer role
-                $lecturer = $this->db->fetchOne(
-                    "SELECT id FROM users WHERE id = ? AND role = 'lecturer' LIMIT 1",
-                    [(int)$body['lecturer_id']]
-                );
-                if (!$lecturer) {
-                    $this->db->rollBack();
-                    $this->json(['error' => 'Người dùng không phải giảng viên.', 'fields' => ['lecturer_id' => 'Người dùng không phải giảng viên.']], 422);
-                }
-
-                // Check for duplicate assignment
-                $existingAssignment = $this->db->fetchOne(
-                    "SELECT id FROM course_assignments WHERE course_id = ? AND lecturer_id = ? AND semester = ? LIMIT 1",
-                    [$courseId, (int)$body['lecturer_id'], trim($body['semester'])]
-                );
-                if ($existingAssignment) {
-                    $this->db->rollBack();
-                    $this->json(['error' => 'Phân công này đã tồn tại.', 'fields' => ['semester' => 'Phân công này đã tồn tại cho học kỳ này.']], 409);
-                }
-
-                $this->db->query(
-                    "INSERT INTO course_assignments (course_id, lecturer_id, semester) VALUES (?,?,?)",
-                    [$courseId, (int)$body['lecturer_id'], trim($body['semester'])]
-                );
-            }
-
-            $this->db->commit();
-            $this->json(['status' => 'success', 'id' => $courseId]);
-        } catch (\PDOException $e) {
-            $this->db->rollBack();
-            if (str_contains($e->getMessage(), 'Duplicate')) {
-                $this->json(['error' => 'Mã môn học đã tồn tại.', 'fields' => ['code' => 'Mã môn học đã tồn tại.']], 409);
-            }
-            $this->json(['error' => 'Lỗi cơ sở dữ liệu: ' . $e->getMessage()], 500);
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            $this->json(['error' => $e->getMessage()], 500);
-        }
+        $this->json(['status' => 'success', 'id' => $this->db->lastInsertId()]);
     }
 
     public function updateCourse(array $params): void
     {
         $this->requireAuth('admin');
-        $this->verifyCsrf();
+        header('Content-Type: application/json');
 
         $id   = (int)($params['id'] ?? 0);
-        $body = $this->jsonBody();
+        if ($id <= 0) { $this->json(['status' => 'error', 'error' => 'ID không hợp lệ.'], 400); return; }
 
-        $data = [
-            'program_id'  => (int)($body['program_id'] ?? 0),
-            'code'        => strtoupper(trim($body['code'] ?? '')),
-            'name'        => trim($body['name'] ?? ''),
-            'credits'     => (int)($body['credits'] ?? 3),
-            'description' => trim($body['description'] ?? ''),
-        ];
+        $body = $this->jsonBody();
+        $code        = trim($body['code'] ?? '');
+        $name        = trim($body['name'] ?? '');
+        $credits     = (int)($body['credits'] ?? 0);
+        $programId   = (int)($body['program_id'] ?? 0);
+        $description = trim($body['description'] ?? '');
 
         $errors = [];
-        if ($data['program_id'] === 0) {
-            $errors['program_id'] = 'Vui lòng chọn chương trình đào tạo.';
-        }
-        if ($data['code'] === '') {
-            $errors['code'] = 'Mã môn học không được để trống.';
-        } elseif (!preg_match('/^[A-Z]{2,6}[0-9]{2,4}[A-Z]?$/i', $data['code'])) {
-            $errors['code'] = 'Mã môn học không hợp lệ (VD: ITEC2201).';
-        }
-        if ($data['name'] === '') {
-            $errors['name'] = 'Tên môn học không được để trống.';
-        }
-        if ($data['credits'] < 1 || $data['credits'] > 10) {
-            $errors['credits'] = 'Số tín chỉ phải từ 1 đến 10.';
-        }
+        if (!$code)         $errors['code']        = 'Mã môn học không được để trống.';
+        if (!$name)         $errors['name']        = 'Tên môn học không được để trống.';
+        if ($credits < 1)   $errors['credits']     = 'Số tín chỉ phải >= 1.';
+        if ($programId < 1) $errors['program_id'] = 'Chương trình đào tạo không hợp lệ.';
 
-        if (!empty($errors)) {
-            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
-        }
-
-        $existing = $this->db->fetchOne(
-            "SELECT id FROM courses WHERE code = ? AND id != ? LIMIT 1",
-            [$data['code'], $id]
-        );
-        if ($existing) {
-            $this->json([
-                'error'  => 'Mã môn học đã tồn tại.',
-                'fields' => ['code' => 'Mã môn học đã tồn tại.'],
-            ], 409);
-        }
+        if ($errors) { $this->json(['status' => 'error', 'error' => 'Validation failed', 'fields' => $errors], 422); return; }
 
         $this->db->query(
-            "UPDATE courses SET program_id=?, code=?, name=?, credits=?, description=? WHERE id=?",
-            [$data['program_id'], $data['code'], $data['name'], $data['credits'], $data['description'], $id]
+            "UPDATE courses SET code = ?, name = ?, credits = ?, program_id = ?, description = ?, updated_at = NOW() WHERE id = ?",
+            [$code, $name, $credits, $programId, $description, $id]
         );
         $this->json(['status' => 'success']);
     }
@@ -595,29 +501,179 @@ class AdminController extends BaseController
     public function deleteCourse(array $params): void
     {
         $this->requireAuth('admin');
-        $this->verifyCsrf();
+        header('Content-Type: application/json');
 
         $id = (int)($params['id'] ?? 0);
-
-        $enrollmentCount = $this->db->fetchOne(
-            "SELECT COUNT(*) as c FROM enrollments e JOIN course_assignments ca ON ca.id = e.assignment_id WHERE ca.course_id = ?",
-            [$id]
-        )['c'];
-
-        if ($enrollmentCount > 0) {
-            $this->json([
-                'error' => "Không thể xóa: môn học đang có {$enrollmentCount} sinh viên đăng ký.",
-            ], 409);
-        }
+        if ($id <= 0) { $this->json(['status' => 'error', 'error' => 'ID không hợp lệ.'], 400); return; }
 
         $this->db->query("DELETE FROM courses WHERE id = ?", [$id]);
         $this->json(['status' => 'success']);
     }
 
+    public function assignLecturer(array $params): void
+    {
+        $this->requireAuth('admin');
+        header('Content-Type: application/json');
+
+        $body = $this->jsonBody();
+        $courseId   = (int)($body['course_id'] ?? 0);
+        $lecturerId = (int)($body['lecturer_id'] ?? 0);
+        $semester   = trim($body['semester'] ?? '');
+
+        if ($courseId < 1)   { $this->json(['status' => 'error', 'error' => 'Môn học không hợp lệ.'], 400); return; }
+        if ($lecturerId < 1) { $this->json(['status' => 'error', 'error' => 'Giảng viên không hợp lệ.'], 400); return; }
+        if (!$semester)       { $this->json(['status' => 'error', 'error' => 'Học kỳ không được để trống.'], 400); return; }
+
+        // Upsert: update existing assignment or insert new one
+        $existing = $this->db->fetchOne(
+            "SELECT id FROM course_assignments WHERE course_id = ? AND semester = ?",
+            [$courseId, $semester]
+        );
+        if ($existing) {
+            $this->db->query(
+                "UPDATE course_assignments SET lecturer_id = ? WHERE course_id = ? AND semester = ?",
+                [$lecturerId, $courseId, $semester]
+            );
+        } else {
+            $this->db->query(
+                "INSERT INTO course_assignments (course_id, lecturer_id, semester, created_at) VALUES (?,?,?,NOW())",
+                [$courseId, $lecturerId, $semester]
+            );
+        }
+        $this->json(['status' => 'success']);
+    }
+
+    public function enrollStudent(array $params): void
+    {
+        $this->requireAuth('admin');
+        header('Content-Type: application/json');
+
+        $body = $this->jsonBody();
+        $courseId = (int)($body['course_id'] ?? 0);
+        $userId   = (int)($body['user_id'] ?? 0);
+
+        if ($courseId < 1 || $userId < 1) {
+            $this->json(['status' => 'error', 'error' => 'Dữ liệu không hợp lệ.'], 400);
+            return;
+        }
+
+        // Check if already enrolled
+        $existing = $this->db->fetchOne(
+            "SELECT id FROM enrollments WHERE course_id = ? AND user_id = ?",
+            [$courseId, $userId]
+        );
+        if ($existing) {
+            $this->json(['status' => 'error', 'error' => 'Sinh viên đã đăng ký môn học này.'], 409);
+            return;
+        }
+
+        $this->db->query(
+            "INSERT INTO enrollments (course_id, user_id, enrolled_at) VALUES (?,?,NOW())",
+            [$courseId, $userId]
+        );
+        $this->json(['status' => 'success', 'id' => $this->db->lastInsertId()]);
+    }
+
+    public function unenrollStudent(array $params): void
+    {
+        $this->requireAuth('admin');
+        header('Content-Type: application/json');
+
+        $body = $this->jsonBody();
+        $courseId = (int)($body['course_id'] ?? 0);
+        $userId   = (int)($body['user_id'] ?? 0);
+
+        if ($courseId < 1 || $userId < 1) {
+            $this->json(['status' => 'error', 'error' => 'Dữ liệu không hợp lệ.'], 400);
+            return;
+        }
+
+        $this->db->query(
+            "DELETE FROM enrollments WHERE course_id = ? AND user_id = ?",
+            [$courseId, $userId]
+        );
+        $this->json(['status' => 'success']);
+    }
+
+    public function getEnrolledStudents(array $params): void
+    {
+        $this->requireAuth('admin');
+        header('Content-Type: application/json');
+
+        $courseId = (int)($params['id'] ?? 0);
+        if ($courseId < 1) { $this->json(['students' => []]); return; }
+
+        $students = $this->db->fetchAll(
+            "SELECT u.id AS user_id, u.student_code, u.full_name, e.enrolled_at
+             FROM enrollments e
+             JOIN users u ON u.id = e.user_id
+             WHERE e.course_id = ?
+             ORDER BY u.full_name ASC",
+            [$courseId]
+        );
+        $this->json(['students' => $students]);
+    }
+
+    public function getAvailableStudents(array $params): void
+    {
+        $this->requireAuth('admin');
+        header('Content-Type: application/json');
+
+        $courseId = (int)($params['course_id'] ?? 0);
+        if ($courseId < 1) { $this->json(['students' => []]); return; }
+
+        $students = $this->db->fetchAll(
+            "SELECT u.id, u.student_code, u.full_name
+             FROM users u
+             WHERE u.role = 'student'
+               AND u.id NOT IN (
+                   SELECT user_id FROM enrollments WHERE course_id = ?
+               )
+             ORDER BY u.full_name ASC",
+            [$courseId]
+        );
+        $this->json(['students' => $students]);
+    }
+
+    public function matrix(array $params): void
+    {
+        $this->requireAuth('admin');
+
+        $courseId = (int)($params['id'] ?? 0);
+        if ($courseId <= 0) { header('Location: /admin/courses'); exit; }
+
+        $course = $this->db->fetchOne(
+            "SELECT c.*, p.name AS program_name
+             FROM courses c
+             LEFT JOIN programs p ON p.id = c.program_id
+             WHERE c.id = ?",
+            [$courseId]
+        );
+        if (!$course) { header('Location: /admin/courses'); exit; }
+
+        $clos = $this->db->fetchAll("SELECT * FROM clos WHERE course_id = ? ORDER BY code", [$courseId]);
+        $plos = $this->db->fetchAll("SELECT * FROM plos WHERE program_id = ? ORDER BY code", [$course['program_id']]);
+
+        // Fetch existing CLO-PLO mappings
+        $mappings = $this->db->fetchAll(
+            "SELECT * FROM clo_plo_mappings WHERE course_id = ?",
+            [$courseId]
+        );
+
+        $this->view('admin/matrix', [
+            'pageTitle'   => "Ma trận CLO-PLO — {$course['code']}",
+            'course'      => $course,
+            'clos'        => $clos,
+            'plos'        => $plos,
+            'mappings'    => $mappings,
+            'csrf_token'  => $this->csrfToken(),
+        ]);
+    }
+
     public function storeAssignment(array $params): void
     {
         $this->requireAuth('admin');
-        $this->verifyCsrf();
+        header('Content-Type: application/json');
 
         $body = $this->jsonBody();
         $data = [
@@ -627,9 +683,9 @@ class AdminController extends BaseController
         ];
 
         $errors = [];
-        if ($data['course_id'] === 0)  $errors['course_id']   = 'Vui lòng chọn môn học.';
-        if ($data['lecturer_id'] === 0) $errors['lecturer_id'] = 'Vui lòng chọn giảng viên.';
-        if ($data['semester'] === '')   $errors['semester']    = 'Học kỳ không được để trống.';
+        if ($data['course_id'] === 0)   $errors['course_id']   = 'Vui lòng chọn môn học.';
+        if ($data['lecturer_id'] === 0)  $errors['lecturer_id'] = 'Vui lòng chọn giảng viên.';
+        if ($data['semester'] === '')    $errors['semester']    = 'Học kỳ không được để trống.';
 
         if (!empty($errors)) {
             $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
