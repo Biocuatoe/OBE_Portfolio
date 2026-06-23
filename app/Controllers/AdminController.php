@@ -419,7 +419,10 @@ class AdminController extends BaseController
                 p.code AS program_code, p.name AS program_name,
                 ca.semester,
                 u.full_name AS lecturer_name,
-                (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS student_count
+                (SELECT COUNT(DISTINCT e.student_id)
+                 FROM enrollments e
+                 JOIN course_assignments ca ON ca.id = e.assignment_id
+                 WHERE ca.course_id = c.id) AS student_count
             FROM courses c
             LEFT JOIN programs p ON p.id = c.program_id
             LEFT JOIN course_assignments ca ON ca.course_id = c.id
@@ -557,10 +560,21 @@ class AdminController extends BaseController
             return;
         }
 
+        // Resolve assignment_id from course_id (use the most recent active assignment)
+        $assignment = $this->db->fetchOne(
+            "SELECT id FROM course_assignments WHERE course_id = ? ORDER BY assigned_at DESC LIMIT 1",
+            [$courseId]
+        );
+        if (!$assignment) {
+            $this->json(['status' => 'error', 'error' => 'Chưa có phân công giảng viên cho môn học này. Vui lòng phân công GV trước.'], 400);
+            return;
+        }
+        $assignmentId = $assignment['id'];
+
         // Check if already enrolled
         $existing = $this->db->fetchOne(
-            "SELECT id FROM enrollments WHERE course_id = ? AND user_id = ?",
-            [$courseId, $userId]
+            "SELECT id FROM enrollments WHERE assignment_id = ? AND student_id = ?",
+            [$assignmentId, $userId]
         );
         if ($existing) {
             $this->json(['status' => 'error', 'error' => 'Sinh viên đã đăng ký môn học này.'], 409);
@@ -568,8 +582,8 @@ class AdminController extends BaseController
         }
 
         $this->db->query(
-            "INSERT INTO enrollments (course_id, user_id, enrolled_at) VALUES (?,?,NOW())",
-            [$courseId, $userId]
+            "INSERT INTO enrollments (student_id, assignment_id) VALUES (?,?)",
+            [$userId, $assignmentId]
         );
         $this->json(['status' => 'success', 'id' => $this->db->lastInsertId()]);
     }
@@ -588,8 +602,11 @@ class AdminController extends BaseController
             return;
         }
 
+        // Resolve assignment_ids for this course, then delete matching enrollments
         $this->db->query(
-            "DELETE FROM enrollments WHERE course_id = ? AND user_id = ?",
+            "DELETE e FROM enrollments e
+             JOIN course_assignments ca ON ca.id = e.assignment_id
+             WHERE ca.course_id = ? AND e.student_id = ?",
             [$courseId, $userId]
         );
         $this->json(['status' => 'success']);
@@ -604,10 +621,11 @@ class AdminController extends BaseController
         if ($courseId < 1) { $this->json(['students' => []]); return; }
 
         $students = $this->db->fetchAll(
-            "SELECT u.id AS user_id, u.student_code, u.full_name, e.enrolled_at
+            "SELECT u.id AS user_id, u.username AS student_code, u.full_name, e.enrolled_at
              FROM enrollments e
-             JOIN users u ON u.id = e.user_id
-             WHERE e.course_id = ?
+             JOIN course_assignments ca ON ca.id = e.assignment_id
+             JOIN users u ON u.id = e.student_id
+             WHERE ca.course_id = ?
              ORDER BY u.full_name ASC",
             [$courseId]
         );
@@ -623,11 +641,14 @@ class AdminController extends BaseController
         if ($courseId < 1) { $this->json(['students' => []]); return; }
 
         $students = $this->db->fetchAll(
-            "SELECT u.id, u.student_code, u.full_name
+            "SELECT u.id, u.username AS student_code, u.full_name
              FROM users u
              WHERE u.role = 'student'
                AND u.id NOT IN (
-                   SELECT user_id FROM enrollments WHERE course_id = ?
+                   SELECT e2.student_id
+                   FROM enrollments e2
+                   JOIN course_assignments ca2 ON ca2.id = e2.assignment_id
+                   WHERE ca2.course_id = ?
                )
              ORDER BY u.full_name ASC",
             [$courseId]
