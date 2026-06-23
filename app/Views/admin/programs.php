@@ -338,7 +338,7 @@
         };
 
         try {
-            const url  = editId ? `/admin/program/${editId}/update` : '/admin/program/store';
+            const url  = editId ? `/admin/program/${editId}/update` : '/admin/programs/store';
             const data = await api(url, 'POST', payload);
 
             if (data.error && data.fields) {

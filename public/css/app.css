@@ -1571,10 +1571,10 @@ kbd {
 
 .form-input {
   width: 100%;
-  background: var(--sidebar-bg);
-  border: 1px solid var(--sidebar-border);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: var(--radius-sm);
-  color: var(--sidebar-text);
+  color: #0f172a;
   padding: 10px 12px 10px 38px;
   font-family: inherit;
   font-size: 14px;
@@ -1582,7 +1582,7 @@ kbd {
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.form-input::placeholder { color: var(--sidebar-text-muted); }
+.form-input::placeholder { color: #94a3b8; }
 .form-input:focus {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px var(--color-accent-soft);
@@ -2057,6 +2057,9 @@ select.form-control { cursor: pointer; }
 .search-bar input {
   padding-left: 36px;
   min-width: 240px;
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
 }
 
 /* ── Empty State ────────────────────────────────────────────────── */

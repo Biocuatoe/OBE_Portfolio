@@ -75,6 +75,7 @@ $router->get('/admin/users',                            [AdminController::class,
 $router->post('/admin/user/store',                       [AdminController::class, 'storeUser'],         'admin.users.store');
 $router->post('/admin/user/:id/update',                  [AdminController::class, 'updateUser'],        'admin.users.update');
 $router->post('/admin/user/:id/toggle',                  [AdminController::class, 'toggleUserStatus'], 'admin.users.toggle');
+$router->get('/admin/activity-log',                      [AdminController::class, 'activityLogs'],      'admin.activity_log');
 $router->get('/admin/activity-logs',                     [AdminController::class, 'activityLogs'],      'admin.activity_logs');
 $router->post('/admin/activity-log/:id/delete',          [AdminController::class, 'deleteActivityLog'], 'admin.activity_logs.delete');
 $router->get('/admin/report/attainment/:program_id',    [AdminController::class, 'reportAttainment'], 'admin.report');
