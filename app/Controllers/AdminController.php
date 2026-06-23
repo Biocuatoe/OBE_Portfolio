@@ -288,7 +288,7 @@ class AdminController extends BaseController
             'program_id'  => (int)($body['program_id'] ?? 0),
             'code'        => trim($body['code'] ?? ''),
             'description' => trim($body['description'] ?? ''),
-            'category'    => trim($body['category'] ?? ''),
+            'category'    => trim(ucfirst(strtolower($body['category'] ?? ''))),
         ];
 
         // Validate required fields
@@ -303,6 +303,10 @@ class AdminController extends BaseController
         }
         if ($data['description'] === '') {
             $errors['description'] = 'Mô tả không được để trống.';
+        }
+        $allowedCategories = ['Knowledge', 'Skill', 'Attitude', 'Responsibility', 'Communication'];
+        if ($data['category'] === '' || !in_array($data['category'], $allowedCategories, true)) {
+            $errors['category'] = 'Danh mục không hợp lệ.';
         }
 
         if (!empty($errors)) {
@@ -350,7 +354,7 @@ class AdminController extends BaseController
             'program_id'  => (int)($body['program_id'] ?? 0),
             'code'        => trim($body['code'] ?? ''),
             'description' => trim($body['description'] ?? ''),
-            'category'    => trim($body['category'] ?? ''),
+            'category'    => trim(ucfirst(strtolower($body['category'] ?? ''))),
         ];
 
         // Validate required fields
@@ -365,6 +369,10 @@ class AdminController extends BaseController
         }
         if ($data['description'] === '') {
             $errors['description'] = 'Mô tả không được để trống.';
+        }
+        $allowedCategories = ['Knowledge', 'Skill', 'Attitude', 'Responsibility', 'Communication'];
+        if ($data['category'] === '' || !in_array($data['category'], $allowedCategories, true)) {
+            $errors['category'] = 'Danh mục không hợp lệ.';
         }
 
         if (!empty($errors)) {

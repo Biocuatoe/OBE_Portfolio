@@ -7,8 +7,8 @@
         <p class="page-sub">Thống kê tỷ lệ đạt chuẩn đầu ra chương trình đào tạo theo PLO</p>
     </div>
     <div class="header-actions">
-        <button class="btn btn-primary btn-sm" id="btnAddPlo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <button class="btn btn-primary btn-sm" id="btnAddPlo" style="background:#2563eb; border-color:#2563eb; color:#fff; border-radius:8px; padding:6px 14px; font-weight:500; font-size:13px; display:inline-flex; align-items:center; gap:6px; transition:background 0.15s, box-shadow 0.15s; box-shadow:0 1px 3px rgba(37,99,235,0.3);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Thêm PLO
         </button>
         <select id="programFilter" class="form-control filter-select" aria-label="Chọn chương trình đào tạo">
@@ -37,14 +37,14 @@
             <a href="/admin/programs" class="btn btn-primary btn-sm mt-8">Tạo chương trình đầu tiên</a>
         </div>
     </div>
-<?php elseif (empty($plo_report)): ?>
+<?php elseif (empty($plos)): ?>
     <!-- Empty State: No PLO Data -->
     <div class="card">
         <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
-            <p>Chương trình chưa có chuẩn đầu ra PLO nào.</p>
+            <p>Chương trình đào tạo này chưa có chuẩn đầu ra (PLO) nào.</p>
             <p class="text-sm text-muted">Vui lòng thêm PLO và đo lường đạt chuẩn cho sinh viên.</p>
             <button class="btn btn-primary btn-sm mt-8" id="btnAddPloEmpty">Thêm PLO đầu tiên</button>
         </div>
@@ -227,8 +227,8 @@
 <?php endif; ?>
 
 <!-- ── Add PLO Modal ─────────────────────────────────────────────── -->
-<div class="modal-overlay" id="ploModal" role="dialog" aria-modal="true">
-    <div class="modal">
+<div class="modal-overlay plo-modal-overlay" id="ploModal" role="dialog" aria-modal="true">
+    <div class="modal plo-modal-card">
         <div class="modal-header">
             <h3 class="modal-title" id="ploModalTitle">Thêm chuẩn đầu ra (PLO)</h3>
             <button class="modal-close" id="ploModalClose">
@@ -291,6 +291,11 @@
 .page-sub { font-size: 13px; color: #94a3b8; }
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mt-8 { margin-top: 8px; }
+
+.btn-primary:hover { background: #1d4ed8 !important; box-shadow: 0 2px 6px rgba(37,99,235,0.35) !important; }
+
+.modal-overlay:not(.plo-modal-overlay) { display: none; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 999; background: rgba(15,23,42,0.4); backdrop-filter: blur(3px); }
+.modal-overlay:not(.plo-modal-overlay).open { display: flex; }
 
 /* ── Filter Select ─────────────────────────────────────────────── */
 .filter-select { min-width: 240px; }
@@ -459,6 +464,126 @@
     .header-actions { flex-direction: column; align-items: stretch; }
     .data-table { font-size: 12px; }
 }
+
+/* ── Add PLO Modal (premium light SaaS) ──────────────────────── */
+.plo-modal-overlay {
+    background: rgba(15,23,42,0.4);
+    backdrop-filter: blur(4px);
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.plo-modal-overlay.open { display: flex; }
+.plo-modal-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 520px;
+    margin: 16px;
+    overflow: hidden;
+}
+.plo-modal-card .modal-header {
+    padding: 20px 24px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.plo-modal-card .modal-title {
+    font-family: 'Lexend Deca', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+.plo-modal-card .modal-close {
+    width: 28px; height: 28px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+.plo-modal-card .modal-close:hover { background: #f1f5f9; color: #475569; }
+.plo-modal-card .modal-close svg { width: 16px; height: 16px; }
+.plo-modal-card .modal-body { padding: 20px 24px; }
+.plo-modal-card .form-group { margin-bottom: 16px; }
+.plo-modal-card .form-group:last-child { margin-bottom: 0; }
+.plo-modal-card .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+.plo-modal-card .form-control {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #0f172a;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+}
+.plo-modal-card .form-control:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+.plo-modal-card textarea.form-control { resize: vertical; min-height: 80px; }
+.plo-modal-card .modal-footer {
+    padding: 14px 24px 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.plo-modal-card .btn-secondary {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.plo-modal-card .btn-secondary:hover { background: #e2e8f0; }
+.plo-modal-card .btn-primary {
+    background: #2563eb;
+    border: 1px solid #2563eb;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    box-shadow: 0 1px 3px rgba(37,99,235,0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.plo-modal-card .btn-primary:hover { background: #1d4ed8; }
+.plo-modal-card .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.plo-modal-card .btn-spinner svg { animation: spin 1s linear infinite; }
+.plo-modal-card .field-error {
+    display: none;
+    font-size: 12px;
+    color: #ef4444;
+    margin-top: 4px;
+}
+.plo-modal-card input.input--error,
+.plo-modal-card textarea.input--error,
+.plo-modal-card select.input--error { border-color: #ef4444; }
 </style>
 
 <script>

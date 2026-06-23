@@ -39,6 +39,16 @@
 
     <div class="table-wrap">
         <table class="data-table striped" id="programsTable">
+            <colgroup>
+                <col style="width:100px">
+                <col>
+                <col style="width:90px">
+                <col style="width:70px">
+                <col style="width:100px">
+                <col style="width:90px">
+                <col style="width:120px">
+                <col style="width:120px">
+            </colgroup>
             <?php
             function th_prog(string $label, string $col): string {
                 global $sort_col, $sort_dir, $search_query;
@@ -46,7 +56,7 @@
                 $newDir   = $isActive && ($sort_dir ?? 'ASC') === 'ASC' ? 'DESC' : 'ASC';
                 $arrow    = $isActive ? (($sort_dir ?? 'ASC') === 'ASC' ? ' &#9650;' : ' &#9660;') : '';
                 $qs       = http_build_query(array_filter(['sort' => $col, 'dir' => $newDir, 'search' => $search_query]));
-                return '<th><a href="/admin/programs?'.$qs.'" class="th-sort'.($isActive ? ' th-sort--active' : '').'" title="Sắp xếp theo '.$label.'">'.$label.$arrow.'</a></th>';
+                return '<a href="/admin/programs?'.$qs.'" class="th-sort'.($isActive ? ' th-sort--active' : '').'" title="Sắp xếp theo '.$label.'">'.$label.$arrow.'</a>';
             }
             ?>
             <thead>
@@ -549,4 +559,6 @@
     .data-table th:nth-child(6),
     .data-table td:nth-child(6) { display: none; }
 }
+.data-table th, .data-table td { vertical-align: middle; }
+.data-table td:nth-child(2) { white-space: normal; max-width: 300px; }
 </style>
