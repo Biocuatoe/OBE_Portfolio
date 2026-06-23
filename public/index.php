@@ -78,7 +78,7 @@ $router->post('/admin/courses/assign-lecturer',        [AdminController::class, 
 $router->post('/admin/courses/enroll-student',         [AdminController::class, 'enrollStudent'],   'admin.courses.enrollStudent');
 $router->post('/admin/courses/unenroll-student',       [AdminController::class, 'unenrollStudent'],'admin.courses.unenrollStudent');
 $router->get('/admin/courses/:id/enrolled',           [AdminController::class, 'getEnrolledStudents'], 'admin.courses.enrolled');
-$router->get('/admin/courses/available-students',      [AdminController::class, 'getAvailableStudents'], 'admin.courses.availableStudents');
+$router->get('/admin/courses/:courseId/available-students', [AdminController::class, 'getAvailableStudents'], 'admin.courses.availableStudents');
 $router->get('/admin/course/:id/matrix',              [AdminController::class, 'matrix'],           'admin.course.matrix');
 $router->get('/admin/course/:course_id/mapping',        [AdminController::class, 'mappingMatrix'],    'admin.mapping');
 $router->get('/admin/users',                            [AdminController::class, 'users'],             'admin.users');

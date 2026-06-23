@@ -533,11 +533,11 @@
         }
     }
 
-    async function loadAvailableStudents() {
+    async function loadAvailableStudents(courseId) {
         const sel = $('enroll-student-select');
         sel.innerHTML = '<option value="">-- Đang tải... --</option>';
         try {
-            const res  = await fetch('/admin/courses/available-students', {
+            const res  = await fetch(`/admin/courses/${courseId}/available-students`, {
                 headers: { 'Accept': 'application/json', 'X-CSRF-Token': csrf },
             });
             const data = await res.json();
@@ -560,7 +560,7 @@
             $('enrollModalTitle').textContent = `Danh sách Đăng ký môn học — ${enrollCourseName}`;
             openModal(enrollModal);
             loadEnrolledStudents(enrollCourseId);
-            loadAvailableStudents();
+            loadAvailableStudents(enrollCourseId);
         });
     });
 
@@ -586,7 +586,7 @@
             if (res.ok && data.status === 'success') {
                 window.Toast?.success('Đăng ký thành công!');
                 loadEnrolledStudents(enrollCourseId);
-                loadAvailableStudents();
+                loadAvailableStudents(enrollCourseId);
                 setTimeout(() => location.reload(), 800);
             } else {
                 window.Toast?.error(data.error || 'Đăng ký thất bại.');

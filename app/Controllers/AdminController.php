@@ -539,7 +539,7 @@ class AdminController extends BaseController
             );
         } else {
             $this->db->query(
-                "INSERT INTO course_assignments (course_id, lecturer_id, semester, created_at) VALUES (?,?,?,NOW())",
+                "INSERT INTO course_assignments (course_id, lecturer_id, semester, assigned_at) VALUES (?,?,?,NOW())",
                 [$courseId, $lecturerId, $semester]
             );
         }
@@ -675,9 +675,11 @@ class AdminController extends BaseController
         $clos = $this->db->fetchAll("SELECT * FROM clos WHERE course_id = ? ORDER BY code", [$courseId]);
         $plos = $this->db->fetchAll("SELECT * FROM plos WHERE program_id = ? ORDER BY code", [$course['program_id']]);
 
-        // Fetch existing CLO-PLO mappings
+        // Fetch existing CLO-PLO mappings (join through clos to filter by course)
         $mappings = $this->db->fetchAll(
-            "SELECT * FROM clo_plo_mappings WHERE course_id = ?",
+            "SELECT m.* FROM clo_plo_mappings m
+             JOIN clos c ON c.id = m.clo_id
+             WHERE c.course_id = ?",
             [$courseId]
         );
 
