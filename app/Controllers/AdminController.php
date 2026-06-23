@@ -219,7 +219,7 @@ class AdminController extends BaseController
         }
 
         $this->db->query(
-            "UPDATE programs SET code=?, name=?, description=? WHERE id=?",
+            "UPDATE programs SET code=?, name=?, description=?, updated_at=NOW() WHERE id=?",
             [$data['code'], $data['name'], $data['description'], $id]
         );
         $this->json(['status' => 'success']);

@@ -102,7 +102,11 @@
                                     <a href="/admin/plos/<?= $p['id'] ?>" class="action-btn action-btn--blue" title="Quản lý PLO">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                                     </a>
-                                    <button class="action-btn action-btn--edit" title="Sửa" data-id="<?= $p['id'] ?>">
+                                    <button class="action-btn action-btn--edit" title="Sửa"
+                                        data-id="<?= htmlspecialchars($p['id']) ?>"
+                                        data-code="<?= htmlspecialchars($p['code']) ?>"
+                                        data-name="<?= htmlspecialchars($p['name']) ?>"
+                                        data-description="<?= htmlspecialchars($p['description']) ?>">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                     </button>
                                     <button class="action-btn action-btn--danger" title="Xóa" data-id="<?= $p['id'] ?>" data-name="<?= htmlspecialchars($p['name']) ?>">
@@ -292,15 +296,15 @@
     const submitBtn = document.getElementById('modalSubmit');
     let editId = null;
 
-    function openModal(id, row) {
+    function openModal(id, source) {
         editId = id;
         modalTitle.textContent = id ? 'Sửa chương trình' : 'Thêm chương trình';
         submitBtn.querySelector('.btn-label').textContent = id ? 'Lưu thay đổi' : 'Tạo mới';
 
-        if (id && row) {
-            document.getElementById('prog-code').value = row.dataset.code || '';
-            document.getElementById('prog-name').value = row.dataset.name || '';
-            document.getElementById('prog-desc').value = row.dataset.description || '';
+        if (id && source) {
+            document.getElementById('prog-code').value = source.dataset.code || '';
+            document.getElementById('prog-name').value = source.dataset.name || '';
+            document.getElementById('prog-desc').value = source.dataset.description || '';
         } else {
             form.reset();
         }
@@ -325,8 +329,7 @@
     // ── Edit buttons ──────────────────────────────────────────────────
     document.querySelectorAll('.action-btn--edit').forEach(btn => {
         btn.addEventListener('click', () => {
-            const row = btn.closest('.program-row');
-            openModal(+btn.dataset.id, row);
+            openModal(+btn.dataset.id, btn);
         });
     });
 
@@ -348,11 +351,11 @@
 
             if (data.error && data.fields) {
                 Object.entries(data.fields).forEach(([k, v]) => setFieldError(k, v));
-                if (data.error !== 'Validation failed') window.Toast?.error(data.error);
+                window.Toast?.error(data.error);
             } else if (data.error) {
                 window.Toast?.error(data.error);
             } else {
-                window.Toast?.success(editId ? 'Đã cập nhật chương trình.' : 'Đã tạo chương trình mới.');
+                window.Toast?.success(editId ? 'Đã cập nhật chương trình đào tạo.' : 'Đã tạo chương trình đào tạo mới.');
                 closeModal();
                 window.location.reload();
             }
@@ -461,6 +464,34 @@
 
 /* Search bar */
 .search-bar { position: relative; display: flex; align-items: center; }
+.search-bar svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+    z-index: 1;
+}
+.search-bar input {
+    padding-left: 36px;
+    min-width: 240px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #0f172a;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-size: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-bar input::placeholder { color: #94a3b8; }
+.search-bar input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    outline: none;
+}
 
 .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
 .action-btn {

@@ -44,8 +44,9 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
-            <p>Chưa có dữ liệu PLO cho chương trình này.</p>
+            <p>Chương trình chưa có chuẩn đầu ra PLO nào.</p>
             <p class="text-sm text-muted">Vui lòng thêm PLO và đo lường đạt chuẩn cho sinh viên.</p>
+            <button class="btn btn-primary btn-sm mt-8" id="btnAddPloEmpty">Thêm PLO đầu tiên</button>
         </div>
     </div>
 <?php else: ?>
@@ -479,16 +480,25 @@
     const ploForm  = document.getElementById('ploForm');
     const ploSubmitBtn = document.getElementById('ploModalSubmit');
 
-    document.getElementById('btnAddPlo')?.addEventListener('click', () => {
+    function openAddPloModal() {
         ploForm.reset();
+        document.getElementById('err-code').textContent = '';
+        document.getElementById('err-description').textContent = '';
         ploModal.classList.add('open');
-    });
+    }
+
+    document.getElementById('btnAddPlo')?.addEventListener('click', openAddPloModal);
+    document.getElementById('btnAddPloEmpty')?.addEventListener('click', openAddPloModal);
     document.getElementById('ploModalClose')?.addEventListener('click', () => ploModal.classList.remove('open'));
     document.getElementById('ploModalCancel')?.addEventListener('click', () => ploModal.classList.remove('open'));
     ploModal?.addEventListener('click', e => { if (e.target === ploModal) ploModal.classList.remove('open'); });
 
     ploForm?.addEventListener('submit', async function(e) {
         e.preventDefault();
+        document.getElementById('err-code').textContent = '';
+        document.getElementById('err-description').textContent = '';
+        document.getElementById('plo-code').classList.remove('error');
+        document.getElementById('plo-desc').classList.remove('error');
         ploSubmitBtn.disabled = true;
         const payload = {
             program_id: document.getElementById('plo-program-id').value,
@@ -504,12 +514,27 @@
                 body: JSON.stringify(payload),
             });
             const data = await res.json();
-            if (!res.ok) throw data;
-            window.Toast?.success('Đã thêm PLO mới.');
-            ploModal.classList.remove('open');
-            window.location.reload();
+
+            if (data.error && data.fields) {
+                Object.entries(data.fields).forEach(([k, v]) => {
+                    const errEl = document.getElementById('err-' + k);
+                    const inputEl = document.getElementById('plo-' + k);
+                    if (errEl) { errEl.textContent = v; errEl.style.display = v ? 'block' : 'none'; }
+                    if (inputEl) inputEl.classList.toggle('error', !!v);
+                });
+                if (data.error !== 'Validation failed') {
+                    window.Toast?.error(data.error);
+                }
+            } else if (data.error) {
+                window.Toast?.error(data.error);
+            } else {
+                window.Toast?.success('Thêm chuẩn đầu ra PLO thành công!');
+                ploModal.classList.remove('open');
+                window.location.reload();
+            }
         } catch(err) {
-            window.Toast?.error(err.error || 'Đã xảy ra lỗi.');
+            window.Toast?.error(err.error || 'Đã xảy ra lỗi. Vui lòng thử lại.');
+        } finally {
             ploSubmitBtn.disabled = false;
         }
     });
