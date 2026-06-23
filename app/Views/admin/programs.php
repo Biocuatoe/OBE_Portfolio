@@ -260,7 +260,12 @@
             method,
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ ...body, _token: CSRF }),
-        }).then(r => r.json()).then(d => { if (!r.ok) throw d; return d; });
+        }).then(r => {
+            return r.json().then(d => {
+                if (!r.ok) throw d;
+                return d;
+            });
+        });
     }
 
     function setFieldError(id, msg) {
@@ -338,7 +343,7 @@
         };
 
         try {
-            const url  = editId ? `/admin/program/${editId}/update` : '/admin/programs/store';
+            const url  = editId ? `/admin/program/${editId}/update` : '/admin/programs';
             const data = await api(url, 'POST', payload);
 
             if (data.error && data.fields) {

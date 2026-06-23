@@ -252,7 +252,7 @@ class AdminController extends BaseController
     {
         $this->requireAuth('admin');
 
-        $programId = (int)($params['program_id'] ?? 0);
+        $programId = (int)($params['program_id'] ?? $params['id'] ?? 0);
         $program   = $this->db->fetchOne("SELECT * FROM programs WHERE id = ?", [$programId]);
 
         if (!$program) $this->redirect('/admin/programs');
