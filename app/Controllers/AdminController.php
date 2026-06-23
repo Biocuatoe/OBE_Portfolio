@@ -309,6 +309,16 @@ class AdminController extends BaseController
             $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
         }
 
+        // Verify program exists
+        $programExists = $this->db->fetchOne("SELECT id FROM programs WHERE id = ?", [$data['program_id']]);
+        if (!$programExists) {
+            $errors['program_id'] = 'Chương trình không tồn tại.';
+        }
+
+        if (!empty($errors)) {
+            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
+        }
+
         // Check duplicate code within the same program
         $existing = $this->db->fetchOne(
             "SELECT id FROM plos WHERE program_id = ? AND code = ? LIMIT 1",
@@ -440,6 +450,12 @@ class AdminController extends BaseController
         $errors = [];
         if ($data['program_id'] === 0) {
             $errors['program_id'] = 'Vui lòng chọn chương trình đào tạo.';
+        } else {
+            // Verify program exists
+            $programExists = $this->db->fetchOne("SELECT id FROM programs WHERE id = ?", [$data['program_id']]);
+            if (!$programExists) {
+                $errors['program_id'] = 'Chương trình đào tạo không tồn tại.';
+            }
         }
         if ($data['code'] === '') {
             $errors['code'] = 'Mã môn học không được để trống.';
@@ -478,6 +494,26 @@ class AdminController extends BaseController
             $courseId = (int)$this->db->lastInsertId();
 
             if (!empty($body['lecturer_id']) && !empty($body['semester'])) {
+                // Verify lecturer role
+                $lecturer = $this->db->fetchOne(
+                    "SELECT id FROM users WHERE id = ? AND role = 'lecturer' LIMIT 1",
+                    [(int)$body['lecturer_id']]
+                );
+                if (!$lecturer) {
+                    $this->db->rollBack();
+                    $this->json(['error' => 'Người dùng không phải giảng viên.', 'fields' => ['lecturer_id' => 'Người dùng không phải giảng viên.']], 422);
+                }
+
+                // Check for duplicate assignment
+                $existingAssignment = $this->db->fetchOne(
+                    "SELECT id FROM course_assignments WHERE course_id = ? AND lecturer_id = ? AND semester = ? LIMIT 1",
+                    [$courseId, (int)$body['lecturer_id'], trim($body['semester'])]
+                );
+                if ($existingAssignment) {
+                    $this->db->rollBack();
+                    $this->json(['error' => 'Phân công này đã tồn tại.', 'fields' => ['semester' => 'Phân công này đã tồn tại cho học kỳ này.']], 409);
+                }
+
                 $this->db->query(
                     "INSERT INTO course_assignments (course_id, lecturer_id, semester) VALUES (?,?,?)",
                     [$courseId, (int)$body['lecturer_id'], trim($body['semester'])]
@@ -486,6 +522,12 @@ class AdminController extends BaseController
 
             $this->db->commit();
             $this->json(['status' => 'success', 'id' => $courseId]);
+        } catch (\PDOException $e) {
+            $this->db->rollBack();
+            if (str_contains($e->getMessage(), 'Duplicate')) {
+                $this->json(['error' => 'Mã môn học đã tồn tại.', 'fields' => ['code' => 'Mã môn học đã tồn tại.']], 409);
+            }
+            $this->json(['error' => 'Lỗi cơ sở dữ liệu: ' . $e->getMessage()], 500);
         } catch (\Throwable $e) {
             $this->db->rollBack();
             $this->json(['error' => $e->getMessage()], 500);
@@ -657,12 +699,38 @@ class AdminController extends BaseController
         $ploId  = (int)($body['plo_id']  ?? 0);
         $weight = (float)($body['weight'] ?? 0);
 
-        if (!$cloId || !$ploId || $weight < 0 || $weight > 100) {
-            $this->json(['error' => 'Dữ liệu không hợp lệ. Trọng số phải từ 0-100.'], 422);
+        if ($weight < 0 || $weight > 100) {
+            $this->json(['error' => 'Trọng số phải từ 0 đến 100.'], 422);
+        }
+
+        // FK validation: CLO must exist and belong to a valid course
+        $clo = $this->db->fetchOne("SELECT id FROM clos WHERE id = ?", [$cloId]);
+        if (!$clo) {
+            $this->json(['error' => 'CLO không tồn tại.'], 404);
+        }
+
+        // FK validation: PLO must exist
+        $plo = $this->db->fetchOne("SELECT id FROM plos WHERE id = ?", [$ploId]);
+        if (!$plo) {
+            $this->json(['error' => 'PLO không tồn tại.'], 404);
+        }
+
+        // Weight sum validation: sum of weights for this CLO row must not exceed 100%
+        $rowMappings = $this->db->fetchAll(
+            "SELECT plo_id, weight FROM clo_plo_mappings WHERE clo_id = ? AND plo_id != ?",
+            [$cloId, $ploId]
+        );
+        $currentRowSum = 0;
+        foreach ($rowMappings as $m) {
+            $currentRowSum += (float)$m['weight'];
+        }
+        if ($currentRowSum + $weight > 100) {
+            $this->json([
+                'error' => "Tổng trọng số cho CLO này vượt quá 100% (hiện tại: {$currentRowSum}%, thêm: {$weight}%).",
+            ], 422);
         }
 
         if ($weight === 0.0) {
-            // Xóa mapping nếu weight = 0
             $this->db->query("DELETE FROM clo_plo_mappings WHERE clo_id=? AND plo_id=?", [$cloId, $ploId]);
         } else {
             $this->db->query(

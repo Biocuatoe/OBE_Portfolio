@@ -235,6 +235,7 @@
             </button>
         </div>
         <form id="ploForm" novalidate>
+            <input type="hidden" name="program_id" id="plo-program-id" value="<?= htmlspecialchars($program['id'] ?? '') ?>">
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label" for="plo-code">Mã PLO <span class="required">*</span></label>
@@ -490,7 +491,7 @@
         e.preventDefault();
         ploSubmitBtn.disabled = true;
         const payload = {
-            program_id: <?= json_encode($program['id'] ?? 0) ?>,
+            program_id: document.getElementById('plo-program-id').value,
             code: document.getElementById('plo-code').value.trim(),
             description: document.getElementById('plo-desc').value.trim(),
             category: document.getElementById('plo-category').value,

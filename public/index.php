@@ -68,8 +68,10 @@ $router->post('/admin/program/:id/delete',             [AdminController::class, 
 $router->get('/admin/program/:program_id/plos',         [AdminController::class, 'plos'],             'admin.plos');
 $router->post('/admin/plos',                            [AdminController::class, 'storePlo'],         'admin.plos.store');
 $router->post('/admin/plo/:id/delete',                  [AdminController::class, 'deletePlo'],        'admin.plos.delete');
+$router->post('/admin/plo/:id/update',                  [AdminController::class, 'updatePlo'],        'admin.plos.update');
 $router->get('/admin/courses',                          [AdminController::class, 'courses'],          'admin.courses');
 $router->post('/admin/courses',                         [AdminController::class, 'storeCourse'],      'admin.courses.store');
+$router->post('/admin/course/:id/update',              [AdminController::class, 'updateCourse'],     'admin.courses.update');
 $router->get('/admin/course/:course_id/mapping',        [AdminController::class, 'mappingMatrix'],    'admin.mapping');
 $router->get('/admin/users',                            [AdminController::class, 'users'],             'admin.users');
 $router->post('/admin/user/store',                       [AdminController::class, 'storeUser'],         'admin.users.store');
