@@ -258,17 +258,13 @@ class AdminController extends BaseController
             exit;
         }
 
-        $stmt = $this->db->prepare("SELECT name, code FROM programs WHERE id = ?");
-        $stmt->execute([$id]);
-        $program = $stmt->fetch(PDO::FETCH_ASSOC);
+        $program = $this->db->fetchOne("SELECT name, code FROM programs WHERE id = ?", [$id]);
         if (!$program) {
             header('Location: /admin/programs');
             exit;
         }
 
-        $stmt2 = $this->db->prepare("SELECT id, code, description, category FROM plos WHERE program_id = ? ORDER BY code ASC");
-        $stmt2->execute([$id]);
-        $plos = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        $plos = $this->db->fetchAll("SELECT id, code, description, category FROM plos WHERE program_id = ? ORDER BY code ASC", [$id]);
 
         $this->view('admin/plos', [
             'pageTitle'    => 'Chuẩn đầu ra (PLO) - ' . $program['code'],
