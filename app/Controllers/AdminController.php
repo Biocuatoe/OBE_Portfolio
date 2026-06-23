@@ -683,7 +683,7 @@ class AdminController extends BaseController
             [$courseId]
         );
 
-        $this->view('admin/matrix', [
+        $this->view('admin/mapping_matrix', [
             'pageTitle'   => "Ma trận CLO-PLO — {$course['code']}",
             'course'      => $course,
             'clos'        => $clos,
