@@ -1,666 +1,770 @@
 <?php /* app/Views/admin/plos.php */ ?>
+<meta name="csrf-token" content="<?= htmlspecialchars($csrf_token) ?>">
 
-<!-- Page Header -->
-<div class="page-header">
-    <div>
-        <h2 class="page-heading"><?= htmlspecialchars($pageTitle ?? 'Báo cáo đạt chuẩn PLO') ?></h2>
-        <p class="page-sub">Thống kê tỷ lệ đạt chuẩn đầu ra chương trình đào tạo theo PLO</p>
+<!-- PAGE WRAPPER — 2-column split layout -->
+<div class="plo-page-wrapper">
+
+  <!-- ── LEFT COLUMN: Program Summary & Stats (30%) ── -->
+  <aside class="plo-sidebar">
+
+    <!-- Back button -->
+    <a href="/admin/programs" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Quay lại danh sách CTĐT
+    </a>
+
+    <!-- Program Header Card -->
+    <div class="program-summary-card">
+      <div class="program-meta">
+        <span class="program-code-badge"><?= htmlspecialchars($program_code) ?></span>
+        <h1 class="program-title"><?= htmlspecialchars($program_name) ?></h1>
+        <p class="program-subtitle">Trang quản lý chuẩn đầu ra PLO</p>
+      </div>
     </div>
-    <div class="header-actions">
-        <button class="btn btn-primary btn-sm" id="btnAddPlo" style="background:#2563eb; border-color:#2563eb; color:#fff; border-radius:8px; padding:6px 14px; font-weight:500; font-size:13px; display:inline-flex; align-items:center; gap:6px; transition:background 0.15s, box-shadow 0.15s; box-shadow:0 1px 3px rgba(37,99,235,0.3);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Thêm PLO
-        </button>
-        <select id="programFilter" class="form-control filter-select" aria-label="Chọn chương trình đào tạo">
-            <?php foreach ($programs as $p): ?>
-                <option value="<?= $p['id'] ?>" <?= ($p['id'] == ($program_id ?? 0)) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($p['code'] . ' – ' . $p['name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-        <a href="/admin/programs" class="btn btn-secondary btn-sm">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            Quay lại CTĐT
-        </a>
-    </div>
-</div>
 
-<?php if (empty($programs)): ?>
-    <!-- Empty State: No Programs -->
-    <div class="card">
-        <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-            </svg>
-            <p>Chưa có chương trình đào tạo nào.</p>
-            <a href="/admin/programs" class="btn btn-primary btn-sm mt-8">Tạo chương trình đầu tiên</a>
-        </div>
-    </div>
-<?php elseif (empty($plos)): ?>
-    <!-- Empty State: No PLO Data -->
-    <div class="card">
-        <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            <p>Chương trình đào tạo này chưa có chuẩn đầu ra (PLO) nào.</p>
-            <p class="text-sm text-muted">Vui lòng thêm PLO và đo lường đạt chuẩn cho sinh viên.</p>
-            <button class="btn btn-primary btn-sm mt-8" id="btnAddPloEmpty">Thêm PLO đầu tiên</button>
-        </div>
-    </div>
-<?php else: ?>
-
-    <!-- PLO Attainment Table -->
-    <div class="card section-card">
-        <div class="card-header">
-            <div class="section-title-group">
-                <h3 class="card-title">Bảng đạt chuẩn theo PLO</h3>
-                <span class="badge badge-gray"><?= count($plo_report) ?> PLO</span>
-            </div>
-            <div class="legend-group">
-                <div class="legend-item">
-                    <span class="legend-dot legend-dot--emerald"></span>
-                    <span class="legend-text">≥ 70% Đạt</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-dot legend-dot--amber"></span>
-                    <span class="legend-text">50–69% Cần cải thiện</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-dot legend-dot--rose"></span>
-                    <span class="legend-text">< 50% Chưa đạt</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="table-wrap">
-            <table class="data-table striped">
-                <thead>
-                    <tr>
-                        <th class="col-plo-code">Mã PLO</th>
-                        <th class="col-plo-desc">Mô tả</th>
-                        <th class="col-plo-cat">Danh mục</th>
-                        <th class="text-center col-plo-students">SV đo</th>
-                        <th class="text-center col-plo-avg">Trung bình %</th>
-                        <th class="text-center col-plo-pass">Đạt</th>
-                        <th class="text-center col-plo-level">Mức đạt</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $totalStudents = 0;
-                    $totalPassed  = 0;
-                    $totalMeasured = 0;
-                    foreach ($plo_report as $plo):
-                        $avg      = (float)(($plo['avg_pct'] ?? 0));
-                        $passed   = (int)  (($plo['passed_count'] ?? 0));
-                        $measured = (int)  (($plo['measured_students'] ?? 0));
-                        $total    = (int)  (($plo['total_count'] ?? 0));
-                        $passRate = $measured > 0 ? round($passed / $measured * 100, 1) : 0;
-
-                        $totalStudents += $measured;
-                        $totalPassed   += $passed;
-                        $totalMeasured += $measured;
-
-                        $levelClass = $avg >= 70 ? 'badge badge-emerald' : ($avg >= 50 ? 'badge badge-amber' : 'badge badge-rose');
-                        $levelLabel = $avg >= 70 ? 'Đạt' : ($avg >= 50 ? 'Cần cải thiện' : 'Chưa đạt');
-                        $avgClass   = $avg >= 70 ? 'text-emerald' : ($avg >= 50 ? 'text-amber' : 'text-rose');
-                        $barClass   = $avg >= 70 ? 'fill--good' : ($avg >= 50 ? 'fill--mid' : 'fill--low');
-
-                        $categoryColors = [
-                            'Knowledge'      => 'badge badge-accent',
-                            'Skill'          => 'badge badge-sky',
-                            'Attitude'       => 'badge badge-emerald',
-                            'Responsibility' => 'badge badge-amber',
-                            'Communication'  => 'badge badge-rose',
-                        ];
-                        $catClass = $categoryColors[$plo['category']] ?? 'badge badge-gray';
-                    ?>
-                        <tr class="plo-row">
-                            <td>
-                                <span class="badge badge-accent"><?= htmlspecialchars($plo['code']) ?></span>
-                            </td>
-                            <td>
-                                <div class="cell-primary"><?= htmlspecialchars(mb_substr($plo['description'], 0, 80)) ?><?= mb_strlen($plo['description']) > 80 ? '…' : '' ?></div>
-                            </td>
-                            <td>
-                                <span class="<?= $catClass ?>"><?= htmlspecialchars($plo['category'] ?? '—') ?></span>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge badge-accent"><?= $measured ?></span>
-                            </td>
-                            <td class="text-center">
-                                <span class="<?= $avgClass ?> plo-avg-value"><?= $avg > 0 ? number_format($avg, 1) . '%' : '—' ?></span>
-                            </td>
-                            <td class="text-center">
-                                <?php if ($measured > 0): ?>
-                                    <div class="cell-progress">
-                                        <div class="mini-progress-track">
-                                            <div class="mini-progress-fill <?= $barClass ?>" style="width:<?= min($passRate, 100) ?>%"></div>
-                                        </div>
-                                        <span class="mini-pass-count"><?= $passed ?>/<?= $measured ?></span>
-                                    </div>
-                                <?php else: ?>
-                                    <span class="text-muted text-sm">—</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="text-center">
-                                <span class="<?= $levelClass ?>"><?= $levelLabel ?></span>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Overall summary bar -->
+    <!-- Stats Card -->
+    <div class="stats-card">
+      <div class="stats-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
+        </svg>
+        Thống kê PLO
+      </div>
+      <div class="stat-big">
+        <span class="stat-number" id="stat-total"><?= count($plos) ?></span>
+        <span class="stat-label">Tổng số PLO</span>
+      </div>
+      <div class="stats-divider"></div>
+      <div class="category-breakdown">
         <?php
-        $overallPct = $totalMeasured > 0 ? round($totalPassed / $totalMeasured * 100, 1) : 0;
-        $overallClass = $overallPct >= 70 ? 'fill--good' : ($overallPct >= 50 ? 'fill--mid' : 'fill--low');
+        $cats = ['Knowledge' => 'badge-blue', 'Skill' => 'badge-green', 'Attitude' => 'badge-amber'];
+        $counts = ['Knowledge' => 0, 'Skill' => 0, 'Attitude' => 0];
+        foreach ($plos as $p) { if (isset($counts[$p['category']])) $counts[$p['category']]++; }
+        foreach ($cats as $cat => $badgeClass): ?>
+          <div class="cat-row">
+            <span class="<?= $badgeClass ?>"><?= htmlspecialchars($cat) ?></span>
+            <span class="cat-count"><?= $counts[$cat] ?? 0 ?></span>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
+    <!-- Add PLO Button (left column) -->
+    <button class="btn btn-primary btn-full" id="btnAddPlo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Thêm PLO mới
+    </button>
+
+  </aside>
+
+  <!-- ── RIGHT COLUMN: PLO Cards List (70%) ── -->
+  <main class="plo-main">
+
+    <!-- Page header -->
+    <div class="plo-main-header">
+      <h2 class="section-title">Danh sách chuẩn đầu ra PLO</h2>
+      <span class="badge-count"><?= count($plos) ?> PLO</span>
+    </div>
+
+    <?php if (empty($plos)): ?>
+      <!-- EMPTY STATE -->
+      <div class="plo-empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">Chương trình <?= htmlspecialchars($program_name) ?> chưa có chuẩn đầu ra PLO nào.</h3>
+        <p class="empty-desc">Chuẩn đầu ra PLO là nền tảng của hệ thống OBE. Hãy thêm PLO để bắt đầu thiết kế ma trận năng lực cho sinh viên khi tốt nghiệp.</p>
+        <button class="btn btn-primary btn-lg" id="btnAddPloEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Thêm PLO đầu tiên
+        </button>
+      </div>
+    <?php else: ?>
+      <!-- PLO CARDS GRID -->
+      <div class="plo-cards-list" id="ploCardsList">
+        <?php
+        $catColors = [
+          'Knowledge' => ['border' => '#3b82f6', 'badge' => 'badge-blue'],
+          'Skill'     => ['border' => '#10b981', 'badge' => 'badge-green'],
+          'Attitude'  => ['border' => '#f59e0b', 'badge' => 'badge-amber'],
+        ];
+        foreach ($plos as $plo):
+          $color = $catColors[$plo['category']] ?? ['border' => '#94a3b8', 'badge' => 'badge-slate'];
         ?>
-        <div class="summary-bar">
-            <div class="summary-stat">
-                <span class="label">Tổng hợp toàn chương trình</span>
-                <span class="text-muted summary-label-small"><?= $totalPassed ?> / <?= $totalMeasured ?> SV đạt chuẩn</span>
+          <div class="plo-card" style="border-left-color: <?= $color['border'] ?>">
+            <div class="plo-card-header">
+              <div class="plo-card-title-row">
+                <strong class="plo-code"><?= htmlspecialchars($plo['code']) ?></strong>
+                <span class="<?= $color['badge'] ?>"><?= htmlspecialchars($plo['category']) ?></span>
+              </div>
+              <div class="plo-card-actions">
+                <button class="action-btn action-btn--edit plo-edit-btn"
+                  data-id="<?= (int)$plo['id'] ?>"
+                  data-code="<?= htmlspecialchars($plo['code']) ?>"
+                  data-description="<?= htmlspecialchars($plo['description']) ?>"
+                  data-category="<?= htmlspecialchars($plo['category']) ?>"
+                  title="Sửa">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="action-btn action-btn--danger plo-delete-btn"
+                  data-id="<?= (int)$plo['id'] ?>"
+                  data-code="<?= htmlspecialchars($plo['code']) ?>"
+                  title="Xóa">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </div>
             </div>
-            <div class="summary-progress-row">
-                <div class="progress-track progress-track--main">
-                    <div class="progress-fill <?= $overallClass ?>" style="width:<?= min($overallPct, 100) ?>%"></div>
-                    <div class="progress-threshold" style="left:70%"></div>
-                </div>
-                <span class="summary-pct <?= $overallPct >= 70 ? 'text-emerald' : ($overallPct >= 50 ? 'text-amber' : 'text-rose') ?>">
-                    <?= $overallPct ?>%
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Top Students Section -->
-    <?php if (!empty($top_students)): ?>
-    <div class="card section-card">
-        <div class="card-header">
-            <div class="section-title-group">
-                <h3 class="card-title">Top sinh viên xuất sắc</h3>
-                <span class="badge badge-amber">Top 10</span>
-            </div>
-        </div>
-
-        <div class="top-students-grid">
-            <?php
-            $rankColors = ['#f59e0b', '#94a3b8', '#cd7c4b', '#64748b', '#64748b'];
-            $rankBgColors = [
-                'rgba(245,158,11,.15)',
-                'rgba(148,163,184,.12)',
-                'rgba(205,124,75,.12)',
-                'rgba(100,116,139,.08)',
-                'rgba(100,116,139,.08)',
-            ];
-            foreach (array_slice($top_students, 0, 10) as $i => $student):
-                $pct    = (float)(($student['overall_pct'] ?? 0));
-                $barCls = $pct >= 70 ? 'fill--good' : ($pct >= 50 ? 'fill--mid' : 'fill--low');
-                $rankBg = $rankBgColors[$i] ?? 'rgba(100,116,139,.08)';
-                $rankFg = $rankColors[$i] ?? '#64748b';
-            ?>
-                <div class="student-rank-card">
-                    <div class="rank-badge" style="background:<?= $rankBg ?>; color:<?= $rankFg ?>">
-                        <?= $i + 1 ?>
-                    </div>
-                    <div class="student-info">
-                        <div class="student-name"><?= htmlspecialchars($student['full_name'] ?? $student['username']) ?></div>
-                        <div class="student-user text-muted text-sm">@<?= htmlspecialchars($student['username']) ?></div>
-                    </div>
-                    <div class="student-bar-wrap">
-                        <div class="mini-progress-track">
-                            <div class="mini-progress-fill <?= $barCls ?>" style="width:<?= min($pct, 100) ?>%"></div>
-                        </div>
-                        <span class="student-pct <?= $pct >= 70 ? 'text-emerald' : ($pct >= 50 ? 'text-amber' : 'text-rose') ?>">
-                            <?= number_format($pct, 1) ?>%
-                        </span>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
+            <p class="plo-description"><?= htmlspecialchars($plo['description']) ?></p>
+          </div>
+        <?php endforeach; ?>
+      </div>
     <?php endif; ?>
 
-<?php endif; ?>
+  </main>
+</div>
 
-<!-- ── Add PLO Modal ─────────────────────────────────────────────── -->
-<div class="modal-overlay plo-modal-overlay" id="ploModal" role="dialog" aria-modal="true">
-    <div class="modal plo-modal-card">
-        <div class="modal-header">
-            <h3 class="modal-title" id="ploModalTitle">Thêm chuẩn đầu ra (PLO)</h3>
-            <button class="modal-close" id="ploModalClose">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-        </div>
-        <form id="ploForm" novalidate>
-            <input type="hidden" name="program_id" id="plo-program-id" value="<?= htmlspecialchars($program['id'] ?? '') ?>">
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label" for="plo-code">Mã PLO <span class="required">*</span></label>
-                    <input type="text" id="plo-code" name="code" class="form-control" placeholder="VD: PLO1" maxlength="20">
-                    <span class="field-error" id="err-code"></span>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="plo-desc">Mô tả <span class="required">*</span></label>
-                    <textarea id="plo-desc" name="description" class="form-control" rows="3" placeholder="Mô tả chuẩn đầu ra..."></textarea>
-                    <span class="field-error" id="err-description"></span>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="plo-category">Danh mục</label>
-                    <select id="plo-category" name="category" class="form-control">
-                        <option value="">— Chọn danh mục —</option>
-                        <option value="Knowledge">Knowledge (Kiến thức)</option>
-                        <option value="Skill">Skill (Kỹ năng)</option>
-                        <option value="Attitude">Attitude (Thái độ)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="ploModalCancel">Hủy</button>
-                <button type="submit" class="btn btn-primary" id="ploModalSubmit">
-                    <span class="btn-label">Thêm PLO</span>
-                    <span class="btn-spinner" hidden>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="spin"><circle cx="12" cy="12" r="10" stroke-dasharray="30 70"/></svg>
-                    </span>
-                </button>
-            </div>
-        </form>
+<!-- ADD / EDIT PLO MODAL -->
+<div class="modal-overlay" id="ploModal">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ploModalTitleLabel">
+    <div class="modal-header">
+      <h3 class="modal-title" id="ploModalTitleLabel">Thêm PLO mới</h3>
+      <button class="modal-close-btn" id="ploModalClose" aria-label="Đóng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
+    <form class="modal-form" id="ploForm">
+      <input type="hidden" name="id" id="plo-id">
+      <div class="form-group">
+        <label for="plo-code">Mã PLO <span class="required">*</span></label>
+        <input type="text" id="plo-code" name="code" class="form-input" placeholder="Ví dụ: PLO1, PLO2..." required maxlength="20">
+        <span class="field-error" id="err-plo-code"></span>
+      </div>
+      <div class="form-group">
+        <label for="plo-category">Danh mục năng lực <span class="required">*</span></label>
+        <select id="plo-category" name="category" class="form-input" required>
+          <option value="">-- Chọn danh mục --</option>
+          <option value="Knowledge">Kiến thức (Knowledge)</option>
+          <option value="Skill">Kỹ năng (Skill)</option>
+          <option value="Attitude">Thái độ (Attitude)</option>
+        </select>
+        <span class="field-error" id="err-plo-category"></span>
+      </div>
+      <div class="form-group">
+        <label for="plo-description">Mô tả năng lực <span class="required">*</span></label>
+        <textarea id="plo-description" name="description" class="form-input" rows="4" placeholder="Mô tả chi tiết chuẩn đầu ra..." required></textarea>
+        <span class="field-error" id="err-plo-description"></span>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="ploCancelBtn">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="ploSubmitBtn">
+          <span class="btn-label">Lưu PLO</span>
+          <svg class="btn-spinner" hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-card modal-sm">
+    <div class="modal-header">
+      <h3 class="modal-title">Xác nhận xóa PLO</h3>
+      <button class="modal-close-btn" id="deleteModalClose" aria-label="Đóng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body-delete">
+      <p>Bạn có chắc muốn xóa <strong id="delete-plo-code"></strong>?<br>Hành động này không thể hoàn tác.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="deleteCancelBtn">Hủy</button>
+      <button class="btn btn-danger" id="deleteConfirmBtn">
+        <span class="btn-label">Xóa</span>
+        <svg class="btn-spinner" hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
 </div>
 
 <style>
-/* ── Page Header ─────────────────────────────────────────────────── */
-.page-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-.page-heading {
-    font-family: 'Lexend Deca', sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 2px;
-}
-.page-sub { font-size: 13px; color: #94a3b8; }
-.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.mt-8 { margin-top: 8px; }
-
-.btn-primary:hover { background: #1d4ed8 !important; box-shadow: 0 2px 6px rgba(37,99,235,0.35) !important; }
-
-.modal-overlay:not(.plo-modal-overlay) { display: none; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 999; background: rgba(15,23,42,0.4); backdrop-filter: blur(3px); }
-.modal-overlay:not(.plo-modal-overlay).open { display: flex; }
-
-/* ── Filter Select ─────────────────────────────────────────────── */
-.filter-select { min-width: 240px; }
-
-/* ── Legend ──────────────────────────────────────────────────────── */
-.legend-group { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 5px; }
-.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.legend-dot--emerald { background: #10b981; }
-.legend-dot--amber   { background: #f59e0b; }
-.legend-dot--rose    { background: #ef4444; }
-.legend-text { font-size: 11px; color: #94a3b8; }
-
-/* ── Table Column Widths ────────────────────────────────────────── */
-.col-plo-code   { min-width: 90px; }
-.col-plo-desc   { min-width: 280px; }
-.col-plo-cat    { min-width: 120px; }
-.col-plo-students { min-width: 70px; }
-.col-plo-avg    { min-width: 100px; }
-.col-plo-pass   { min-width: 130px; }
-.col-plo-level  { min-width: 110px; }
-
-/* ── Cell Styles ────────────────────────────────────────────────── */
-.cell-primary { font-size: 13px; color: #0f172a; }
-.cell-progress {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: center;
-}
-.plo-avg-value { font-weight: 700; font-size: 14px; }
-.mini-pass-count { font-size: 11px; font-weight: 500; color: #94a3b8; }
-
-/* ── Mini Progress Bar ─────────────────────────────────────────── */
-.mini-progress-track {
-    height: 5px;
-    background: #e2e8f0;
-    border-radius: 3px;
-    overflow: hidden;
-    width: 70px;
-    flex-shrink: 0;
-}
-.mini-progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+/* === PLO Control Center Layout === */
+.plo-page-wrapper {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 0 40px;
 }
 
-/* ── Top Students ────────────────────────────────────────────────── */
-.top-students-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-.student-rank-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    transition: border-color 0.2s ease;
-}
-.student-rank-card:hover { border-color: #cbd5e1; }
-
-.rank-badge {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Lexend Deca', sans-serif;
-    font-weight: 800;
-    font-size: 12px;
-    flex-shrink: 0;
+/* ── LEFT SIDEBAR ── */
+.plo-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 24px;
 }
 
-.student-info { flex: 1; min-width: 0; }
-.student-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  text-decoration: none;
+  padding: 6px 0;
+  transition: color 0.15s;
 }
-.student-user {
-    font-size: 11px;
-    margin-top: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.back-link:hover { color: #334155; }
+
+.program-summary-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.program-code-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+.program-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  margin: 0 0 4px;
+}
+.program-subtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
 }
 
-.student-bar-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.student-pct { font-weight: 700; font-size: 13px; min-width: 44px; text-align: right; }
-
-/* ── Progress Track (PLO summary) ──────────────────────────────── */
-.progress-track--main {
-    flex: 1;
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
-    position: relative;
-    overflow: visible;
+.stats-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+.stats-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
 }
-.fill--good { background: linear-gradient(90deg, #10b981, #34d399); }
-.fill--mid  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.fill--low  { background: linear-gradient(90deg, #ef4444, #fb7185); }
-.progress-threshold {
-    position: absolute;
-    top: -2px;
-    bottom: -2px;
-    width: 2px;
-    background: rgba(245, 158, 11, 0.6);
-    border-radius: 1px;
+.stat-big {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 16px;
 }
-
-/* ── Summary Bar ────────────────────────────────────────────────── */
-.summary-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 16px 20px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    margin-top: 20px;
-    flex-wrap: wrap;
+.stat-number {
+  font-size: 48px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
-.summary-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+.stat-label {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-top: 4px;
 }
-.summary-stat .label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #0f172a;
+.stats-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 12px 0;
 }
-.summary-label-small { font-size: 11px; font-weight: 500; }
-.summary-progress-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-    min-width: 200px;
+.category-breakdown { display: flex; flex-direction: column; gap: 10px; }
+.cat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.summary-pct {
-    font-weight: 800;
-    font-size: 18px;
-    flex-shrink: 0;
+.cat-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: #475569;
 }
 
-/* ── Responsive ─────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-    .top-students-grid { grid-template-columns: 1fr; }
-    .header-actions { flex-direction: column; align-items: stretch; }
-    .data-table { font-size: 12px; }
+.btn-full {
+  width: 100%;
+  justify-content: center;
 }
 
-/* ── Add PLO Modal (premium light SaaS) ──────────────────────── */
-.plo-modal-overlay {
-    background: rgba(15,23,42,0.4);
-    backdrop-filter: blur(4px);
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
+/* ── RIGHT MAIN CONTENT ── */
+.plo-main {
+  flex: 1;
+  min-width: 0;
 }
-.plo-modal-overlay.open { display: flex; }
-.plo-modal-card {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05);
-    width: 100%;
-    max-width: 520px;
-    margin: 16px;
-    overflow: hidden;
+.plo-main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
 }
-.plo-modal-card .modal-header {
-    padding: 20px 24px 18px;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
 }
-.plo-modal-card .modal-title {
-    font-family: 'Lexend Deca', sans-serif;
-    font-size: 17px;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0;
+.badge-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 4px 12px;
+  border-radius: 20px;
 }
-.plo-modal-card .modal-close {
-    width: 28px; height: 28px;
-    border: none;
-    background: none;
-    border-radius: 6px;
-    color: #94a3b8;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s, color 0.15s;
+
+/* ── EMPTY STATE ── */
+.plo-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 60px 40px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
-.plo-modal-card .modal-close:hover { background: #f1f5f9; color: #475569; }
-.plo-modal-card .modal-close svg { width: 16px; height: 16px; }
-.plo-modal-card .modal-body { padding: 20px 24px; }
-.plo-modal-card .form-group { margin-bottom: 16px; }
-.plo-modal-card .form-group:last-child { margin-bottom: 0; }
-.plo-modal-card .form-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 6px;
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 50%;
+  margin-bottom: 24px;
+  color: #d97706;
 }
-.plo-modal-card .form-control {
-    width: 100%;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 14px;
-    color: #0f172a;
-    background: #fff;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    box-sizing: border-box;
+.empty-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+  max-width: 400px;
 }
-.plo-modal-card .form-control:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+.empty-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 28px;
+  max-width: 440px;
+  line-height: 1.6;
 }
-.plo-modal-card textarea.form-control { resize: vertical; min-height: 80px; }
-.plo-modal-card .modal-footer {
-    padding: 14px 24px 20px;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
+
+/* ── PLO CARDS ── */
+.plo-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.plo-modal-card .btn-secondary {
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    color: #475569;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s;
+.plo-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #6366f1;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s, transform 0.15s;
 }
-.plo-modal-card .btn-secondary:hover { background: #e2e8f0; }
-.plo-modal-card .btn-primary {
-    background: #2563eb;
-    border: 1px solid #2563eb;
-    color: #fff;
-    border-radius: 8px;
-    padding: 8px 18px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s;
-    box-shadow: 0 1px 3px rgba(37,99,235,0.3);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+.plo-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
 }
-.plo-modal-card .btn-primary:hover { background: #1d4ed8; }
-.plo-modal-card .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-.plo-modal-card .btn-spinner svg { animation: spin 1s linear infinite; }
-.plo-modal-card .field-error {
-    display: none;
-    font-size: 12px;
-    color: #ef4444;
-    margin-top: 4px;
+.plo-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
-.plo-modal-card input.input--error,
-.plo-modal-card textarea.input--error,
-.plo-modal-card select.input--error { border-color: #ef4444; }
+.plo-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.plo-code {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.plo-description {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+.plo-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── BADGES ── */
+.badge-blue   { background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+.badge-green  { background: #d1fae5; color: #065f46; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+.badge-amber  { background: #fef3c7; color: #92400e; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+.badge-slate  { background: #f1f5f9; color: #475569; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.45);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.18);
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  animation: modalIn 0.2s ease;
+}
+.modal-sm { max-width: 400px; }
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.modal-close-btn:hover { color: #334155; background: #f1f5f9; }
+.modal-form { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+.required { color: #ef4444; }
+.form-input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #ffffff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+.form-input.input--error { border-color: #ef4444; }
+textarea.form-input { resize: vertical; min-height: 100px; }
+select.form-input { cursor: pointer; }
+.field-error { font-size: 12px; color: #ef4444; display: none; }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+.modal-body-delete { padding: 20px 24px; font-size: 14px; color: #475569; line-height: 1.6; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: #4f46e5; color: #ffffff; }
+.btn-primary:hover { background: #4338ca; box-shadow: 0 2px 8px rgba(79,70,229,0.35); }
+.btn-secondary { background: #f1f5f9; color: #475569; }
+.btn-secondary:hover { background: #e2e8f0; }
+.btn-danger { background: #ef4444; color: #ffffff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-lg { padding: 12px 24px; font-size: 15px; border-radius: 12px; }
+.btn-sm { padding: 6px 14px; font-size: 13px; border-radius: 8px; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-spinner { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── ACTION BUTTONS ── */
+.action-btn {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s;
+}
+.action-btn svg { width: 14px; height: 14px; }
+.action-btn--edit:hover { border-color: #4f46e5; color: #4f46e5; background: rgba(79,70,229,0.06); }
+.action-btn--danger:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.06); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .plo-page-wrapper { flex-direction: column; }
+  .plo-sidebar { width: 100%; position: static; }
+}
 </style>
 
 <script>
 (function() {
-    // ── Program Filter Redirect ─────────────────────────────────────
-    const programFilter = document.getElementById('programFilter');
-    if (programFilter) {
-        programFilter.addEventListener('change', function() {
-            const programId = this.value;
-            if (programId) {
-                window.location.href = '/admin/report/attainment/' + programId;
-            }
+    // ── Modal State ──────────────────────────────────────────────
+    const modal      = document.getElementById('ploModal');
+    const form       = document.getElementById('ploForm');
+    const modalTitle = document.getElementById('ploModalTitleLabel');
+    const submitBtn  = document.getElementById('ploSubmitBtn');
+    const csrfToken  = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    let editPloId = null;
+
+    function openPloModal(id, data) {
+        editPloId = id;
+        modalTitle.textContent = id ? 'Sửa PLO' : 'Thêm PLO mới';
+        submitBtn.querySelector('.btn-label').textContent = id ? 'Lưu thay đổi' : 'Lưu PLO';
+        clearErrors();
+        if (id && data) {
+            document.getElementById('plo-id').value = id;
+            document.getElementById('plo-code').value = data.code || '';
+            document.getElementById('plo-category').value = data.category || '';
+            document.getElementById('plo-description').value = data.description || '';
+        } else {
+            form.reset();
+            document.getElementById('plo-id').value = '';
+        }
+        modal.classList.add('open');
+        document.getElementById('plo-code').focus();
+    }
+
+    function closePloModal() {
+        modal.classList.remove('open');
+        editPloId = null;
+        form.reset();
+        clearErrors();
+    }
+
+    function clearErrors() {
+        ['code','category','description'].forEach(id => setFieldError(id, ''));
+    }
+
+    function setFieldError(id, msg) {
+        const el = document.getElementById('err-plo-' + id);
+        if (el) { el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+        const input = document.getElementById('plo-' + id);
+        if (input) input.classList.toggle('input--error', !!msg);
+    }
+
+    function setLoading(on) {
+        submitBtn.disabled = on;
+        submitBtn.querySelector('.btn-label').textContent = on ? 'Đang xử lý...' : (editPloId ? 'Lưu thay đổi' : 'Lưu PLO');
+        submitBtn.querySelector('.btn-spinner').hidden = !on;
+    }
+
+    // ── Event Listeners ──────────────────────────────────────────
+    document.getElementById('btnAddPlo')?.addEventListener('click', () => openPloModal(null));
+    document.getElementById('btnAddPloEmpty')?.addEventListener('click', () => openPloModal(null));
+    document.getElementById('ploModalClose')?.addEventListener('click', closePloModal);
+    document.getElementById('ploCancelBtn')?.addEventListener('click', closePloModal);
+    modal?.addEventListener('click', e => { if (e.target === modal) closePloModal(); });
+
+    // Escape key closes modal
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closePloModal();
+            closeDeleteModal();
+        }
+    });
+
+    // Edit buttons
+    document.querySelectorAll('.plo-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            openPloModal(+btn.dataset.id, {
+                code: btn.dataset.code,
+                category: btn.dataset.category,
+                description: btn.dataset.description
+            });
         });
+    });
+
+    // Delete buttons
+    const deleteModal = document.getElementById('deleteModal');
+    let deletePloId = null;
+
+    function closeDeleteModal() {
+        deleteModal?.classList.remove('open');
+        deletePloId = null;
     }
 
-    // ── Add PLO Modal ─────────────────────────────────────────────
-    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-    const ploModal = document.getElementById('ploModal');
-    const ploForm  = document.getElementById('ploForm');
-    const ploSubmitBtn = document.getElementById('ploModalSubmit');
+    document.querySelectorAll('.plo-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            deletePloId = +btn.dataset.id;
+            document.getElementById('delete-plo-code').textContent = btn.dataset.code;
+            deleteModal?.classList.add('open');
+        });
+    });
 
-    function openAddPloModal() {
-        ploForm.reset();
-        document.getElementById('err-code').textContent = '';
-        document.getElementById('err-description').textContent = '';
-        ploModal.classList.add('open');
-    }
+    document.getElementById('deleteCancelBtn')?.addEventListener('click', closeDeleteModal);
+    document.getElementById('deleteModalClose')?.addEventListener('click', closeDeleteModal);
+    deleteModal?.addEventListener('click', e => { if (e.target === deleteModal) closeDeleteModal(); });
 
-    document.getElementById('btnAddPlo')?.addEventListener('click', openAddPloModal);
-    document.getElementById('btnAddPloEmpty')?.addEventListener('click', openAddPloModal);
-    document.getElementById('ploModalClose')?.addEventListener('click', () => ploModal.classList.remove('open'));
-    document.getElementById('ploModalCancel')?.addEventListener('click', () => ploModal.classList.remove('open'));
-    ploModal?.addEventListener('click', e => { if (e.target === ploModal) ploModal.classList.remove('open'); });
-
-    ploForm?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        document.getElementById('err-code').textContent = '';
-        document.getElementById('err-description').textContent = '';
-        document.getElementById('plo-code').classList.remove('error');
-        document.getElementById('plo-desc').classList.remove('error');
-        ploSubmitBtn.disabled = true;
-        const payload = {
-            program_id: document.getElementById('plo-program-id').value,
-            code: document.getElementById('plo-code').value.trim(),
-            description: document.getElementById('plo-desc').value.trim(),
-            category: document.getElementById('plo-category').value,
-            _token: CSRF,
-        };
+    document.getElementById('deleteConfirmBtn')?.addEventListener('click', async () => {
+        if (!deletePloId) return;
+        const btn = document.getElementById('deleteConfirmBtn');
+        btn.disabled = true;
+        btn.querySelector('.btn-label').textContent = 'Đang xóa...';
+        btn.querySelector('.btn-spinner').hidden = false;
         try {
-            const res = await fetch('/admin/plos', {
+            const res = await fetch(`/admin/plo/${deletePloId}/delete`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(payload),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ _token: csrfToken })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && (data.status === 'success' || res.status === 200)) {
+                window.Toast?.success('Đã xóa PLO thành công!');
+                closeDeleteModal();
+                setTimeout(() => location.reload(), 600);
+            } else {
+                window.Toast?.error(data.error || 'Xóa thất bại.');
+                btn.disabled = false;
+                btn.querySelector('.btn-label').textContent = 'Xóa';
+                btn.querySelector('.btn-spinner').hidden = true;
+            }
+        } catch {
+            window.Toast?.error('Đã xảy ra lỗi khi xóa.');
+            btn.disabled = false;
+            btn.querySelector('.btn-label').textContent = 'Xóa';
+            btn.querySelector('.btn-spinner').hidden = true;
+        }
+    });
+
+    // ── Form Submit ──────────────────────────────────────────────
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearErrors();
+        setLoading(true);
+
+        const payload = {
+            code: document.getElementById('plo-code').value.trim(),
+            category: document.getElementById('plo-category').value,
+            description: document.getElementById('plo-description').value.trim(),
+            _token: csrfToken
+        };
+
+        if (!payload.code) { setFieldError('code', 'Mã PLO là bắt buộc.'); setLoading(false); return; }
+        if (!payload.category) { setFieldError('category', 'Danh mục là bắt buộc.'); setLoading(false); return; }
+        if (!payload.description) { setFieldError('description', 'Mô tả là bắt buộc.'); setLoading(false); return; }
+
+        const url = editPloId ? `/admin/plo/${editPloId}/update` : '/admin/plos';
+        const method = 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
 
-            if (data.error && data.fields) {
-                Object.entries(data.fields).forEach(([k, v]) => {
-                    const errEl = document.getElementById('err-' + k);
-                    const inputEl = document.getElementById('plo-' + k);
-                    if (errEl) { errEl.textContent = v; errEl.style.display = v ? 'block' : 'none'; }
-                    if (inputEl) inputEl.classList.toggle('error', !!v);
-                });
-                if (data.error !== 'Validation failed') {
-                    window.Toast?.error(data.error);
-                }
-            } else if (data.error) {
-                window.Toast?.error(data.error);
+            if (res.ok && (data.status === 'success' || res.status === 200)) {
+                window.Toast?.success(editPloId ? 'Cập nhật PLO thành công!' : 'Thêm PLO mới thành công!');
+                closePloModal();
+                setTimeout(() => location.reload(), 600);
             } else {
-                window.Toast?.success('Thêm chuẩn đầu ra PLO thành công!');
-                ploModal.classList.remove('open');
-                window.location.reload();
+                if (data.fields) {
+                    Object.entries(data.fields).forEach(([k, v]) => setFieldError(k, Array.isArray(v) ? v[0] : v));
+                } else {
+                    window.Toast?.error(data.error || 'Đã xảy ra lỗi.');
+                }
+                setLoading(false);
             }
-        } catch(err) {
-            window.Toast?.error(err.error || 'Đã xảy ra lỗi. Vui lòng thử lại.');
-        } finally {
-            ploSubmitBtn.disabled = false;
+        } catch {
+            window.Toast?.error('Đã xảy ra lỗi kết nối.');
+            setLoading(false);
         }
     });
 })();

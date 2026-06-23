@@ -65,11 +65,11 @@ $router->get('/admin/programs',                         [AdminController::class,
 $router->post('/admin/programs',                        [AdminController::class, 'storeProgram'],     'admin.programs.store');
 $router->post('/admin/program/:id/update',             [AdminController::class, 'updateProgram'],     'admin.programs.update');
 $router->post('/admin/program/:id/delete',             [AdminController::class, 'deleteProgram'],     'admin.programs.delete');
-$router->get('/admin/program/:program_id/plos',   [AdminController::class, 'plos'],             'admin.plos');
-$router->get('/admin/plos/:id',                 [AdminController::class, 'plos'],             'admin.plos.view');
-$router->post('/admin/plos',                    [AdminController::class, 'storePlo'],         'admin.plos.store');
-$router->post('/admin/plo/:id/delete',          [AdminController::class, 'deletePlo'],        'admin.plos.delete');
-$router->post('/admin/plo/:id/update',                  [AdminController::class, 'updatePlo'],        'admin.plos.update');
+$router->get('/admin/program/:program_id/plos',     [AdminController::class, 'plos'],           'admin.plos');
+$router->get('/admin/plos/:id',                   [AdminController::class, 'plos'],           'admin.plos.view');
+$router->post('/admin/program/:id/plos',         [AdminController::class, 'storePlo'],       'admin.plos.store');
+$router->post('/admin/plo/:id/update',            [AdminController::class, 'updatePlo'],       'admin.plos.update');
+$router->post('/admin/plo/:id/delete',            [AdminController::class, 'deletePlo'],       'admin.plos.delete');
 $router->get('/admin/courses',                          [AdminController::class, 'courses'],          'admin.courses');
 $router->post('/admin/courses',                         [AdminController::class, 'storeCourse'],      'admin.courses.store');
 $router->post('/admin/course/:id/update',              [AdminController::class, 'updateCourse'],     'admin.courses.update');

@@ -252,92 +252,82 @@ class AdminController extends BaseController
     {
         $this->requireAuth('admin');
 
-        $programId = (int)($params['program_id'] ?? $params['id'] ?? 0);
-        $program   = $this->db->fetchOne("SELECT * FROM programs WHERE id = ?", [$programId]);
+        $id = (int)($params['id'] ?? $params['program_id'] ?? 0);
+        if ($id <= 0) {
+            header('Location: /admin/programs');
+            exit;
+        }
 
-        if (!$program) $this->redirect('/admin/programs');
+        $stmt = $this->db->prepare("SELECT name, code FROM programs WHERE id = ?");
+        $stmt->execute([$id]);
+        $program = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$program) {
+            header('Location: /admin/programs');
+            exit;
+        }
 
-        $plos = $this->db->fetchAll(
-            "SELECT pl.*,
-                COUNT(DISTINCT m.clo_id) AS mapped_clo_count,
-                ROUND(AVG(pa.achieved_percentage), 1) AS avg_attainment
-             FROM plos pl
-             LEFT JOIN clo_plo_mappings m ON m.plo_id = pl.id
-             LEFT JOIN plo_attainments pa ON pa.plo_id = pl.id
-             WHERE pl.program_id = ?
-             GROUP BY pl.id
-             ORDER BY pl.code",
-            [$programId]
-        );
+        $stmt2 = $this->db->prepare("SELECT id, code, description, category FROM plos WHERE program_id = ? ORDER BY code ASC");
+        $stmt2->execute([$id]);
+        $plos = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
         $this->view('admin/plos', [
-            'pageTitle'  => 'Chuẩn đầu ra (PLO) - ' . $program['code'],
-            'program'    => $program,
-            'plos'       => $plos,
-            'csrf_token' => $this->csrfToken(),
+            'pageTitle'    => 'Chuẩn đầu ra (PLO) - ' . $program['code'],
+            'program_name' => $program['name'],
+            'program_code' => $program['code'],
+            'program_id'   => $id,
+            'plos'        => $plos,
+            'csrf_token'  => $this->csrfToken(),
         ]);
     }
 
     public function storePlo(array $params): void
     {
         $this->requireAuth('admin');
-        $this->verifyCsrf();
 
+        // Accept both JSON body (API) and form POST
         $body = $this->jsonBody();
-        $data = [
-            'program_id'  => (int)($body['program_id'] ?? 0),
-            'code'        => trim($body['code'] ?? ''),
-            'description' => trim($body['description'] ?? ''),
-            'category'    => trim(ucfirst(strtolower($body['category'] ?? ''))),
-        ];
-
-        // Validate required fields
         $errors = [];
-        if (!$data['program_id']) {
-            $errors['program_id'] = 'Vui lòng chọn chương trình đào tạo.';
-        }
-        if ($data['code'] === '') {
+
+        $code        = trim($body['code'] ?? '');
+        $category    = trim(ucfirst(strtolower($body['category'] ?? '')));
+        $description = trim($body['description'] ?? '');
+        $programId   = (int)($params['id'] ?? 0);
+
+        if (!$code) {
             $errors['code'] = 'Mã PLO không được để trống.';
-        } elseif (!preg_match('/^[A-Z0-9\-]{2,20}$/', $data['code'])) {
+        } elseif (!preg_match('/^[A-Z0-9\-]{2,20}$/', $code)) {
             $errors['code'] = 'Mã PLO gồm chữ hoa, số, gạch ngang (2-20 ký tự).';
         }
-        if ($data['description'] === '') {
+        $allowedCategories = ['Knowledge', 'Skill', 'Attitude'];
+        if ($category === '' || !in_array($category, $allowedCategories, true)) {
+            $errors['category'] = 'Danh mục không hợp lệ. Chọn Knowledge, Skill hoặc Attitude.';
+        }
+        if (!$description) {
             $errors['description'] = 'Mô tả không được để trống.';
         }
-        $allowedCategories = ['Knowledge', 'Skill', 'Attitude', 'Responsibility', 'Communication'];
-        if ($data['category'] === '' || !in_array($data['category'], $allowedCategories, true)) {
-            $errors['category'] = 'Danh mục không hợp lệ.';
-        }
-
-        if (!empty($errors)) {
-            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
-        }
-
-        // Verify program exists
-        $programExists = $this->db->fetchOne("SELECT id FROM programs WHERE id = ?", [$data['program_id']]);
-        if (!$programExists) {
-            $errors['program_id'] = 'Chương trình không tồn tại.';
-        }
-
-        if (!empty($errors)) {
-            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
+        if ($programId <= 0) {
+            $errors['program_id'] = 'Chương trình không hợp lệ.';
         }
 
         // Check duplicate code within the same program
-        $existing = $this->db->fetchOne(
-            "SELECT id FROM plos WHERE program_id = ? AND code = ? LIMIT 1",
-            [$data['program_id'], $data['code']]
-        );
-        if ($existing) {
-            $this->json([
-                'error'  => 'Mã PLO đã tồn tại trong chương trình này.',
-                'fields' => ['code' => 'Mã PLO đã tồn tại trong chương trình này.'],
-            ], 409);
+        if ($code && $programId > 0) {
+            $existing = $this->db->fetchOne(
+                "SELECT id FROM plos WHERE program_id = ? AND code = ? LIMIT 1",
+                [$programId, $code]
+            );
+            if ($existing) {
+                $errors['code'] = 'Mã PLO đã tồn tại trong chương trình này.';
+            }
+        }
+
+        if (!empty($errors)) {
+            $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
+            return;
         }
 
         $this->db->query(
             "INSERT INTO plos (program_id, code, description, category) VALUES (?,?,?,?)",
-            array_values($data)
+            [$programId, $code, $description, $category]
         );
         $this->json(['status' => 'success', 'id' => $this->db->lastInsertId()]);
     }
@@ -345,55 +335,61 @@ class AdminController extends BaseController
     public function updatePlo(array $params): void
     {
         $this->requireAuth('admin');
-        $this->verifyCsrf();
 
         $id   = (int)($params['id'] ?? 0);
-        $body = $this->jsonBody();
-
-        $data = [
-            'program_id'  => (int)($body['program_id'] ?? 0),
-            'code'        => trim($body['code'] ?? ''),
-            'description' => trim($body['description'] ?? ''),
-            'category'    => trim(ucfirst(strtolower($body['category'] ?? ''))),
-        ];
-
-        // Validate required fields
-        $errors = [];
-        if (!$data['program_id']) {
-            $errors['program_id'] = 'Vui lòng chọn chương trình đào tạo.';
+        if ($id <= 0) {
+            $this->json(['error' => 'ID không hợp lệ.'], 400);
+            return;
         }
-        if ($data['code'] === '') {
+
+        $body = $this->jsonBody();
+        $errors = [];
+
+        $code        = trim($body['code'] ?? '');
+        $category    = trim(ucfirst(strtolower($body['category'] ?? '')));
+        $description = trim($body['description'] ?? '');
+
+        if (!$code) {
             $errors['code'] = 'Mã PLO không được để trống.';
-        } elseif (!preg_match('/^[A-Z0-9\-]{2,20}$/', $data['code'])) {
+        } elseif (!preg_match('/^[A-Z0-9\-]{2,20}$/', $code)) {
             $errors['code'] = 'Mã PLO gồm chữ hoa, số, gạch ngang (2-20 ký tự).';
         }
-        if ($data['description'] === '') {
-            $errors['description'] = 'Mô tả không được để trống.';
+        $allowedCategories = ['Knowledge', 'Skill', 'Attitude'];
+        if ($category === '' || !in_array($category, $allowedCategories, true)) {
+            $errors['category'] = 'Danh mục không hợp lệ. Chọn Knowledge, Skill hoặc Attitude.';
         }
-        $allowedCategories = ['Knowledge', 'Skill', 'Attitude', 'Responsibility', 'Communication'];
-        if ($data['category'] === '' || !in_array($data['category'], $allowedCategories, true)) {
-            $errors['category'] = 'Danh mục không hợp lệ.';
+        if (!$description) {
+            $errors['description'] = 'Mô tả không được để trống.';
         }
 
         if (!empty($errors)) {
             $this->json(['error' => 'Validation failed', 'fields' => $errors], 422);
+            return;
+        }
+
+        // Get the PLO's program_id for duplicate check
+        $existingPlo = $this->db->fetchOne("SELECT program_id FROM plos WHERE id = ?", [$id]);
+        if (!$existingPlo) {
+            $this->json(['error' => 'PLO không tồn tại.'], 404);
+            return;
         }
 
         // Check duplicate code (excluding current record)
-        $existing = $this->db->fetchOne(
+        $duplicate = $this->db->fetchOne(
             "SELECT id FROM plos WHERE program_id = ? AND code = ? AND id != ? LIMIT 1",
-            [$data['program_id'], $data['code'], $id]
+            [$existingPlo['program_id'], $code, $id]
         );
-        if ($existing) {
+        if ($duplicate) {
             $this->json([
                 'error'  => 'Mã PLO đã tồn tại trong chương trình này.',
                 'fields' => ['code' => 'Mã PLO đã tồn tại trong chương trình này.'],
             ], 409);
+            return;
         }
 
         $this->db->query(
-            "UPDATE plos SET program_id=?, code=?, description=?, category=? WHERE id=?",
-            [$data['program_id'], $data['code'], $data['description'], $data['category'], $id]
+            "UPDATE plos SET code = ?, description = ?, category = ?, updated_at = NOW() WHERE id = ?",
+            [$code, $description, $category, $id]
         );
         $this->json(['status' => 'success']);
     }
@@ -401,9 +397,13 @@ class AdminController extends BaseController
     public function deletePlo(array $params): void
     {
         $this->requireAuth('admin');
-        $this->verifyCsrf();
 
         $id = (int)($params['id'] ?? 0);
+        if ($id <= 0) {
+            $this->json(['error' => 'ID không hợp lệ.'], 400);
+            return;
+        }
+
         $this->db->query("DELETE FROM plos WHERE id = ?", [$id]);
         $this->json(['status' => 'success']);
     }
